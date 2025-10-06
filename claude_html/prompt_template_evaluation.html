@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Confucian Café Prompt Template Review</title>
+<style>
+:root {
+    --chinese-red:#8B0000;
+    --chinese-gold:#FFD700;
+    --paper-beige:#F5F5DC;
+    --light-cream:#FFFEF0;
+    --ink-black:#1a1a1a;
+    --level-1:#8B0000;
+    --level-2:#CD5C5C;
+    --level-3:#555;
+    --level-4:#777;
+    --jade:#0EA16A;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:linear-gradient(135deg,var(--paper-beige)0%,var(--light-cream)100%);
+    color:var(--ink-black);
+    margin:0;
+    padding:0;
+    width:100vw;
+    max-width:100%;
+    line-height:1.2;
+    font-size:14px;
+    font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+}
+.container{width:100%;padding:0;margin:0;}
+h1{font-size:24px;font-weight:900;margin:4px 0;padding:6px 4px;background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.5px;}
+h2{font-size:18px;font-weight:700;margin:8px 0 4px 0;padding:4px;border-left:4px solid var(--chinese-red);background:rgba(139,0,0,0.03);color:var(--level-1);}
+h3{font-size:14px;font-weight:600;margin:4px 0 2px 8px;color:var(--level-2);text-transform:uppercase;letter-spacing:0.5px;}
+h4{font-size:12px;font-weight:500;margin:2px 0 1px 16px;color:var(--level-3);}h5,h6{font-size:11px;font-weight:500;margin:1px 0 1px 24px;color:var(--level-4);}
+button{background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);color:#fff;border:1px solid rgba(255,215,0,0.3);transition:all .2s ease;padding:4px 10px;margin:2px;font-size:12px;border-radius:2px;cursor:pointer;font-weight:600;}button:hover{transform:translateY(-1px);box-shadow:0 1px 4px rgba(139,0,0,0.3);}
+.two-column-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:4px;}
+.full-width{grid-column:1 / -1;}
+.collapsible{border:1px solid rgba(139,0,0,0.12);background:white;margin:4px 0;}
+.collapsible-header{cursor:pointer;padding:6px 10px;background:linear-gradient(135deg,rgba(139,0,0,0.08),rgba(255,215,0,0.05));border-left:3px solid var(--chinese-gold);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;color:var(--level-2);}
+.collapsible-header .arrow{transition:transform 0.3s ease;font-size:11px;color:var(--chinese-red);}
+.collapsible.open .collapsible-header .arrow{transform:rotate(90deg);} 
+.collapsible-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 10px;}
+.collapsible.open .collapsible-content{max-height:2400px;padding:6px 10px 8px 10px;}
+.dense-list{list-style:none;padding:0;margin:0;}
+.dense-list li{padding:2px 0 2px 14px;border-left:2px solid transparent;position:relative;line-height:1.2;}
+.dense-list li:before{content:"▸";position:absolute;left:0;font-size:10px;color:var(--chinese-red);}
+.dense-list li strong{color:var(--level-2);font-weight:600;}
+.badge{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(139,0,0,0.14);color:var(--level-1);}
+.tag{display:inline-block;background:rgba(14,161,106,0.18);border:1px solid rgba(14,161,106,0.24);border-radius:999px;padding:1px 6px;font-size:10px;margin-right:4px;color:var(--jade);} 
+.important-always-visible{background:linear-gradient(135deg,rgba(255,215,0,0.18),white);border:2px solid var(--chinese-gold);padding:8px;margin:4px;box-shadow:0 1px 4px rgba(139,0,0,0.16);} 
+pre{font-family:'SF Mono','Menlo','Consolas',monospace;background:rgba(0,0,0,0.05);padding:6px;border-radius:3px;font-size:11px;line-height:1.3;white-space:pre-wrap;word-break:break-word;}
+.grid-pairs{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;} 
+.alert{color:var(--chinese-red);font-weight:700;} .ok{color:var(--jade);font-weight:700;} .muted{color:var(--level-4);} 
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Confucian Café Prompt Template Review</h1>
+<div style="text-align:right;margin:4px 4px 0 0;">
+<button id="expand-all">Expand All</button>
+<button id="collapse-all">Collapse All</button>
+</div>
+</header>
+<section class="important-always-visible">
+<h2>🎯 Critical Findings</h2>
+<div class="two-column-layout">
+<ul class="dense-list">
+<li><strong>Status:</strong> Templates are structurally sound; XML → JSON contract aligns with UI pipeline.</li>
+<li><strong>Coverage:</strong> Revised ordering (SystemPrompt → Directive → Context → OutputContract) reads clearly and keeps safety coupled to turn directives.</li>
+</ul>
+<ul class="dense-list">
+<li><strong>Watchpoints:</strong> Clarify when both `audience` attributes diverge, and guard JSON contract with schema validation before UI ingestion.</li>
+<li><strong>Action:</strong> Add fallback for empty `prior_statements` and extend the constraint block for translation completeness checks.</li>
+</ul>
+</div>
+<p class="muted">Saved to <code>claude_html/prompt_template_evaluation.html</code> and opened for review.</p>
+</section>
+<main class="two-column-layout">
+<div class="collapsible" data-collapsible="open">
+<div class="collapsible-header"><span>⚙️ XML Skeleton Fitness</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<div class="grid-pairs">
+<div>
+<h3>Strengths</h3>
+<ul class="dense-list">
+<li><strong>Persona containment:</strong> `SystemPersona` CDATA keeps doctrinal tone isolated, letting moderator override round tone in `GeneralGuidance`/`Directive`.</li>
+<li><strong>Safety placement:</strong> Embedding `<SafetyRules>` in each directive ensures critique/synthesis inherit policy without relying on global memory.</li>
+<li><strong>UI contract sync:</strong> OutputContract mirrors frontend expectations (`surface`, `translations`, `insight`, optional `citations`), minimizing parsing glue.</li>
+</ul>
+</div>
+<div>
+<h3>Gaps</h3>
+<ul class="dense-list">
+<li><strong>Audience mismatch risk:</strong> `audience` lives on both `<Directive>` and `<Context><UserPrompt>`; add assertion so moderator never emits divergent values.</li>
+<li><strong>Context sparseness:</strong> Template assumes `prior_statements` exists; wrap loop with fallback to avoid blank `<PeerStatements>` nodes that some parsers drop.</li>
+<li><strong>Insight discipline:</strong> Guidance asks for surface/insight divergence but could stress “surface must stay under {surface_cap} words” inside OutputContract for redundancy.</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>📈 Prompt Template Behaviors</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<h3>Phase Mapping</h3>
+<ul class="dense-list">
+<li><strong>Introduce:</strong> `type="introduce"` plus empty context cleanly seeds anchor cards.</li>
+<li><strong>Cross-response:</strong> Target statement injection inside `<PeerStatements>` sets up critique focus; ensure `context.phase` enumerates canonical ids (`introduce`, `cross-response`, `synthesis`).</li>
+<li><strong>Synthesis:</strong> All anchors replayed; consider appending moderator summary stub in `GeneralGuidance` to steer toward convergence.</li>
+</ul>
+<h3>Translation Controls</h3>
+<ul class="dense-list">
+<li><strong>Auto-on:</strong> `requireTranslations="modern,classical"` is helpful but add reminder in OutputContract that empty strings violate contract.</li>
+<li><strong>Selective toggles:</strong> When UI flags disable insight, directive should warn model to keep private reasoning short yet still fill `insight` for moderator logging.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>🛡️ Validation & Tooling</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Schema check:</strong> Run XML schema or XPath lint preflight; reject prompts lacking `OutputContract` block.</li>
+<li><strong>Response gate:</strong> Enforce JSON schema on model replies (surface string, translation strings, non-empty insight) before UI broadcast.</li>
+<li><strong>Testing:</strong> Extend Playwright spec to submit console prompts with empty `prior_statements` to confirm fallback rendering.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>🚀 Recommended Enhancements</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Phase telemetry:</strong> Emit `phase` attribute on `<OutputContract>` or add `expectedPhase` field so backend can sanity-check round alignment.</li>
+<li><strong>Audience echo:</strong> Add `<AudienceSummary>` node explaining why agent was addressed (helps critiques know routing rationale).</li>
+<li><strong>Safety extensibility:</strong> Structure `<SafetyRules>` as list generated from policy config so future rules toggle without touching template.</li>
+<li><strong>Persona diffs:</strong> Version `SystemPersona` block with checksum comment to detect stale agent cards.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🗂️ Reference Artifacts</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Prompt template sources:</strong> `prompt_template_details.html`, `prompt_template_revision.html`.</li>
+<li><strong>UI contract alignment:</strong> `confucian_cafe_three_phase_integration.html` mock lanes demonstrate expected JSON payload fields.</li>
+<li><strong>Testing harness:</strong> `tests/confucian-phase-prototype.spec.js` exercises mock LLM console to validate synthesis growth.</li>
+</ul>
+</div>
+</div>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('[data-collapsible]').forEach(function(section){
+        const isOpen=section.getAttribute('data-collapsible')==='open';
+        section.classList.add('collapsible');
+        if(isOpen) section.classList.add('open');
+    });
+    document.querySelectorAll('.collapsible-header').forEach(function(header){
+        header.addEventListener('click',function(){
+            const collapsible=this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+    const expandAllBtn=document.getElementById('expand-all');
+    const collapseAllBtn=document.getElementById('collapse-all');
+    if(expandAllBtn){
+        expandAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.add('open');});
+        });
+    }
+    if(collapseAllBtn){
+        collapseAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.remove('open');});
+        });
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confucian Café: A2A Architecture & Implementation Guide</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --chinese-red: #8B0000;
+            --chinese-gold: #FFD700;
+            --paper-beige: #F5F5DC;
+            --light-cream: #FFFEF0;
+            --ink-black: #1a1a1a;
+            --level-1: #8B0000;
+            --level-2: #CD5C5C;
+            --level-3: #666;
+            --level-4: #999;
+            --confucius-blue: #4A90E2;
+            --laotse-green: #50C878;
+            --mozi-purple: #9370DB;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+            color: var(--ink-black);
+            margin: 0; padding: 0; width: 100vw; max-width: 100%;
+            line-height: 1.3; font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+
+        .container { width: 100%; padding: 0; margin: 0; }
+
+        h1 {
+            font-size: 32px; font-weight: 900; margin: 12px 0; padding: 16px 12px;
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px; text-align: center;
+        }
+
+        h2 {
+            font-size: 22px; font-weight: 700; margin: 16px 0 8px 0; padding: 8px 12px;
+            border-left: 4px solid var(--chinese-red); background: rgba(139, 0, 0, 0.05);
+            color: var(--level-1);
+        }
+
+        h3 {
+            font-size: 18px; font-weight: 600; margin: 12px 0 6px 12px;
+            color: var(--level-2); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        h4 {
+            font-size: 15px; font-weight: 600; margin: 8px 0 4px 16px;
+            color: var(--level-3);
+        }
+
+        .important-always-visible {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), white);
+            border: 3px solid var(--chinese-gold); padding: 16px; margin: 20px 12px;
+            border-radius: 4px; box-shadow: 0 2px 8px rgba(139, 0, 0, 0.1);
+        }
+
+        .important-always-visible h2 {
+            color: var(--chinese-red); margin-top: 0;
+            border-left: none; background: none; padding-left: 0;
+        }
+
+        .collapsible { margin: 8px 12px; width: calc(100% - 24px); }
+
+        .collapsible-header {
+            cursor: pointer; padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.06), rgba(255, 215, 0, 0.03));
+            border-left: 3px solid var(--chinese-gold);
+            display: flex; align-items: center; justify-content: space-between;
+            user-select: none; transition: all 0.2s ease;
+            font-weight: 600; font-size: 16px; color: var(--level-2);
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.12), rgba(255, 215, 0, 0.06));
+        }
+
+        .collapsible-header .arrow {
+            display: inline-block; transition: transform 0.3s ease;
+            color: var(--chinese-red); font-size: 14px; font-weight: bold;
+        }
+
+        .collapsible.open .arrow { transform: rotate(90deg); }
+
+        .collapsible-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            padding: 0 16px; margin-left: 12px;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 25000px; padding: 16px;
+        }
+
+        .collapsible.critical .collapsible-header {
+            border-left: 4px solid var(--chinese-red);
+            background: rgba(139, 0, 0, 0.1);
+            font-weight: 700; font-size: 17px;
+        }
+
+        .two-column-layout {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 8px;
+        }
+
+        .three-column-layout {
+            display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 8px;
+        }
+
+        .card {
+            background: white; border: 1px solid rgba(139, 0, 0, 0.2);
+            border-radius: 3px; padding: 12px; margin: 8px 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.priority {
+            border: 2px solid var(--chinese-gold);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), white);
+        }
+
+        .card.confucius { border-left: 4px solid var(--confucius-blue); }
+        .card.laotse { border-left: 4px solid var(--laotse-green); }
+        .card.mozi { border-left: 4px solid var(--mozi-purple); }
+
+        .card h4 { margin: 0 0 8px 0; color: var(--chinese-red); }
+
+        .dense-list {
+            list-style: none; padding: 0; margin: 8px 0 8px 12px;
+        }
+
+        .dense-list li {
+            padding: 4px 0 4px 16px; border-left: 2px solid transparent;
+            position: relative; line-height: 1.5;
+        }
+
+        .dense-list li:before {
+            content: "▸"; position: absolute; left: 0;
+            color: var(--chinese-red); font-size: 12px;
+        }
+
+        .dense-list li strong { color: var(--level-2); font-weight: 600; }
+
+        pre, code {
+            background: linear-gradient(135deg, rgba(245, 245, 220, 0.4), rgba(255, 255, 255, 0.6));
+            border: 1px solid rgba(139, 0, 0, 0.15);
+            padding: 2px 6px; margin: 2px 0; font-size: 12px; line-height: 1.3;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; border-radius: 2px;
+        }
+
+        pre { padding: 12px; margin: 8px 0; overflow-x: auto; }
+
+        table {
+            width: 100%; border-collapse: collapse; margin: 12px 0;
+            font-size: 13px; background: white;
+        }
+
+        th, td {
+            border: 1px solid rgba(139, 0, 0, 0.2); padding: 8px 10px;
+            text-align: left; line-height: 1.4;
+        }
+
+        th {
+            background: rgba(139, 0, 0, 0.12); font-weight: 700;
+            color: var(--level-1);
+        }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, var(--chinese-red), transparent);
+            margin: 20px 12px;
+        }
+
+        .indent-1 { margin-left: 20px; }
+        .indent-2 { margin-left: 40px; }
+
+        .highlight-box {
+            background: rgba(255, 215, 0, 0.1); border-left: 4px solid var(--chinese-gold);
+            padding: 12px 16px; margin: 12px 0;
+        }
+
+        button, .button {
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            color: white; border: 1px solid rgba(255, 215, 0, 0.3);
+            transition: all 0.2s ease; padding: 6px 14px; margin: 2px;
+            font-size: 14px; line-height: 1.3; border-radius: 3px;
+            cursor: pointer; font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.3);
+            border-color: var(--chinese-gold);
+        }
+
+        .expand-all-btn {
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+        }
+
+        .mermaid {
+            background: white; padding: 20px; margin: 16px 0;
+            border: 2px solid var(--chinese-gold); border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .philosopher-badge {
+            display: inline-block; padding: 4px 10px; border-radius: 3px;
+            font-size: 11px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; margin-right: 8px;
+        }
+
+        .badge-confucius { background: #E3F2FD; color: var(--confucius-blue); }
+        .badge-laotse { background: #E8F5E9; color: var(--laotse-green); }
+        .badge-mozi { background: #F3E5F5; color: var(--mozi-purple); }
+        .badge-moderator { background: #FFF3E0; color: #E65100; }
+        .badge-react { background: #E1F5FE; color: #0277BD; }
+        .badge-claude { background: #FFF3E0; color: #E65100; }
+        .badge-a2a { background: #F3E5F5; color: #6A1B9A; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="expand-all-btn" onclick="toggleAll()">Expand All</button>
+
+        <h1>☕ Confucian Café: Complete A2A Architecture</h1>
+        <h1 style="font-size: 20px; margin-top: -8px;">React Frontend + Claude Agent SDK + A2A Protocol</h1>
+
+        <div class="important-always-visible">
+            <h2>🎯 Project Overview</h2>
+            <p style="font-size: 16px; line-height: 1.6; margin: 10px 0;">
+                <strong>Confucian Café</strong> is a multi-agent philosophical dialogue system where three ancient Chinese philosophers—Confucius, Lao Tse, and Mozi—engage in real-time debates about the nature of a good life, powered by:
+            </p>
+
+            <div class="three-column-layout" style="margin-top: 12px;">
+                <div class="card">
+                    <h4><span class="badge-a2a">A2A Protocol</span></h4>
+                    <p style="font-size: 13px;">Agent-to-agent communication via JSON-RPC over HTTPS</p>
+                </div>
+                <div class="card">
+                    <h4><span class="badge-claude">Claude Agent SDK</span></h4>
+                    <p style="font-size: 13px;">Python SDK for building autonomous agents with Claude</p>
+                </div>
+                <div class="card">
+                    <h4><span class="badge-react">React Frontend</span></h4>
+                    <p style="font-size: 13px;">Real-time UI with SSE streaming and TypeScript</p>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 16px;">
+                <strong style="color: var(--chinese-red); font-size: 15px;">GitHub Repository:</strong>
+                <code style="font-size: 14px; margin-left: 8px;">github.com/yourname/confucian-cafe</code>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> A2A Protocol: Deep Architectural Analysis</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Complete A2A Protocol Architecture</h3>
+                <div class="mermaid">
+graph TB
+    subgraph Client["🖥️ Client Layer"]
+        WEB[Web Frontend<br/>React/Vue/Svelte]
+        CLI[CLI Tools<br/>a2a-cli]
+        SDK[Client SDKs<br/>Python/TypeScript/Java]
+    end
+
+    subgraph Discovery["📋 Discovery Layer"]
+        CARD[Agent Card<br/>.well-known/agent.json]
+        REG[Agent Registry<br/>Optional Central Discovery]
+    end
+
+    subgraph Protocol["🔄 Protocol Layer (JSON-RPC 2.0)"]
+        direction LR
+        TASKS[Tasks API<br/>tasks/send<br/>tasks/get<br/>tasks/cancel]
+        MSGS[Messages API<br/>message/send<br/>message/stream]
+        AGENT[Agent API<br/>agent/getCard<br/>agent/getAuthenticatedExtendedCard]
+    end
+
+    subgraph Transport["🌐 Transport Layer"]
+        HTTPS[HTTPS<br/>JSON-RPC over HTTP]
+        SSE[Server-Sent Events<br/>Streaming]
+        GRPC[gRPC<br/>Optional]
+    end
+
+    subgraph AgentLayer["🤖 Agent Implementation Layer"]
+        direction TB
+        SERVER[A2A Server<br/>FastAPI/Flask/Express]
+        EXEC[Agent Executor<br/>LLM Integration]
+        TOOLS[Tools & Skills<br/>Custom Functions]
+        STATE[State Management<br/>Conversation History]
+    end
+
+    subgraph LLM["🧠 LLM Providers"]
+        CLAUDE[Claude<br/>Anthropic]
+        GPT[GPT-4<br/>OpenAI]
+        GEMINI[Gemini<br/>Google]
+    end
+
+    subgraph Security["🔒 Security Layer"]
+        AUTH[Authentication<br/>OAuth 2.0, API Keys]
+        TLS[TLS/HTTPS<br/>Encryption]
+        SIGN[Card Signing<br/>Verification]
+    end
+
+    WEB --> CARD
+    CLI --> CARD
+    SDK --> CARD
+
+    CARD --> TASKS
+    CARD --> MSGS
+    CARD --> AGENT
+
+    TASKS --> HTTPS
+    MSGS --> SSE
+    AGENT --> HTTPS
+
+    HTTPS --> AUTH
+    SSE --> AUTH
+    GRPC --> AUTH
+
+    AUTH --> SERVER
+    SERVER --> EXEC
+    EXEC --> TOOLS
+    EXEC --> STATE
+
+    EXEC --> CLAUDE
+    EXEC --> GPT
+    EXEC --> GEMINI
+
+    TLS -.-> HTTPS
+    SIGN -.-> CARD
+
+    style Protocol fill:#F3E5F5,stroke:#6A1B9A,stroke-width:3px
+    style AgentLayer fill:#E8F5E9,stroke:#50C878,stroke-width:3px
+    style Security fill:#FFEBEE,stroke:#8B0000,stroke-width:3px
+                </div>
+
+                <h3>A2A Protocol Layers Explained</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Layer</th>
+                            <th>Purpose</th>
+                            <th>Key Components</th>
+                            <th>Technologies</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Client Layer</strong></td>
+                            <td>User-facing interfaces that interact with agents</td>
+                            <td>Web apps, CLI tools, mobile apps, SDKs</td>
+                            <td>React, Vue, Python CLI, TypeScript SDK</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Discovery Layer</strong></td>
+                            <td>Agents advertise capabilities and discover other agents</td>
+                            <td>Agent Cards (JSON metadata), optional registries</td>
+                            <td>JSON, HTTP GET, DNS-SD</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Protocol Layer</strong></td>
+                            <td>Standardized API methods for agent communication</td>
+                            <td>Tasks API, Messages API, Agent API</td>
+                            <td>JSON-RPC 2.0</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Transport Layer</strong></td>
+                            <td>Network communication mechanisms</td>
+                            <td>HTTP, SSE (streaming), gRPC</td>
+                            <td>HTTPS, WebSockets, HTTP/2</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Agent Implementation</strong></td>
+                            <td>Actual agent logic and LLM integration</td>
+                            <td>A2A servers, executors, tools, state</td>
+                            <td>Python (FastAPI), Node.js, Java Spring</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Security Layer</strong></td>
+                            <td>Authentication, encryption, integrity</td>
+                            <td>OAuth, TLS, card signing</td>
+                            <td>OAuth 2.0, JWT, HTTPS, RSA signatures</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>JSON-RPC 2.0 Methods Deep Dive</h3>
+                <div class="mermaid">
+sequenceDiagram
+    participant C as Client
+    participant A as Agent Server
+    participant L as LLM (Claude)
+
+    Note over C,L: Method 1: tasks/send (Async)
+    C->>A: POST / tasks/send<br/>{task: "Explain Confucian ethics"}
+    A->>A: Create Task ID
+    A-->>C: 200 OK<br/>{taskId: "task-123", status: "working"}
+    A->>L: Query Claude with prompt
+    L-->>A: Response chunks
+    A->>A: Update task status
+    C->>A: GET / tasks/get<br/>{taskId: "task-123"}
+    A-->>C: {status: "completed", artifacts: [...]}
+
+    Note over C,L: Method 2: message/send (Sync)
+    C->>A: POST / message/send<br/>{message: "What is ren?"}
+    A->>L: Immediate query
+    L-->>A: Response
+    A-->>C: 200 OK<br/>{message: "Ren (仁) is benevolence..."}
+
+    Note over C,L: Method 3: message/stream (SSE)
+    C->>A: POST / message/stream<br/>{message: "Explain wu wei"}
+    A->>L: Start streaming query
+    loop Stream chunks
+        L-->>A: Chunk
+        A-->>C: SSE: data: {text: "Wu wei..."}
+    end
+    A-->>C: SSE: data: {status: "completed"}
+
+    Note over C,L: Method 4: agent/getCard
+    C->>A: POST / agent/getCard
+    A-->>C: {name: "Confucius", skills: [...]}
+                </div>
+
+                <h3>Complete A2A Method Reference</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Type</th>
+                            <th>Request Params</th>
+                            <th>Response</th>
+                            <th>Use Case</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>tasks/send</code></td>
+                            <td>Async</td>
+                            <td><code>{task: Task}</code></td>
+                            <td><code>{id, contextId, status}</code></td>
+                            <td>Long-running operations, delegate work to agent</td>
+                        </tr>
+                        <tr>
+                            <td><code>tasks/get</code></td>
+                            <td>Sync</td>
+                            <td><code>{taskId: string}</code></td>
+                            <td><code>{id, status, artifacts}</code></td>
+                            <td>Poll task status and retrieve results</td>
+                        </tr>
+                        <tr>
+                            <td><code>tasks/cancel</code></td>
+                            <td>Sync</td>
+                            <td><code>{taskId: string}</code></td>
+                            <td><code>{id, status: "cancelled"}</code></td>
+                            <td>Cancel long-running tasks</td>
+                        </tr>
+                        <tr>
+                            <td><code>message/send</code></td>
+                            <td>Sync</td>
+                            <td><code>{message: Message, conversationId?}</code></td>
+                            <td><code>{message: Message}</code></td>
+                            <td>Quick request-response, chat interactions</td>
+                        </tr>
+                        <tr>
+                            <td><code>message/stream</code></td>
+                            <td>Stream</td>
+                            <td><code>{message: Message, conversationId?}</code></td>
+                            <td>SSE stream of <code>Message</code> chunks</td>
+                            <td>Real-time streaming responses for UI</td>
+                        </tr>
+                        <tr>
+                            <td><code>agent/getCard</code></td>
+                            <td>Sync</td>
+                            <td><code>{}</code></td>
+                            <td><code>AgentCard</code></td>
+                            <td>Discover agent capabilities at runtime</td>
+                        </tr>
+                        <tr>
+                            <td><code>agent/getAuthenticatedExtendedCard</code></td>
+                            <td>Sync</td>
+                            <td><code>{credentials}</code></td>
+                            <td><code>ExtendedAgentCard</code></td>
+                            <td>Access authenticated-only agent features</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Agent Card Structure</h3>
+                <pre>{
+  "name": "Confucius Agent",
+  "version": "1.0.0",
+  "description": "Confucian philosopher specializing in virtue ethics",
+  "url": "https://confucian-cafe.example.com/agents/confucius",
+  "provider": {
+    "organization": "Confucian Café",
+    "url": "https://github.com/yourname/confucian-cafe"
+  },
+  "capabilities": {
+    "streaming": true,
+    "pushNotifications": false,
+    "stateTransitionHistory": true
+  },
+  "defaultInputModes": ["text/plain", "application/json"],
+  "defaultOutputModes": ["text/plain", "application/json"],
+  "skills": [
+    {
+      "id": "share_position",
+      "name": "Share Philosophical Position",
+      "description": "Articulate Confucian view on a topic",
+      "parameters": {
+        "topic": {"type": "string", "required": true},
+        "context": {"type": "array", "items": "string"}
+      }
+    }
+  ],
+  "authentication": {
+    "required": false,
+    "schemes": ["bearer"]
+  },
+  "extensions": {
+    "philosophical_school": "Confucianism (儒家)",
+    "core_concepts": ["ren", "li", "xiao", "junzi"]
+  }
+}</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> Confucian Café System Architecture</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Full Stack Architecture</h3>
+                <div class="mermaid">
+graph TB
+    subgraph Frontend["⚛️ React Frontend (Port 3000)"]
+        UI[React App<br/>TypeScript + Vite]
+        COMP[Components<br/>DialogueView, PhilosopherCard]
+        SSE_CLIENT[SSE Client<br/>EventSource API]
+        STATE_MGR[State Management<br/>Zustand/Redux]
+    end
+
+    subgraph Backend["🐍 Python Backend"]
+        subgraph Moderator["🎭 Moderator (Port 8000)"]
+            MOD_API[FastAPI Server]
+            MOD_LOGIC[Dialogue Manager]
+            A2A_CLIENT[A2A Client<br/>httpx]
+        end
+
+        subgraph Philosophers["🏛️ Philosopher Agents"]
+            CONF[Confucius<br/>Port 8001]
+            LAO[Lao Tse<br/>Port 8002]
+            MOZI[Mozi<br/>Port 8003]
+        end
+    end
+
+    subgraph AgentSDK["☁️ Claude Agent SDK"]
+        CLAUDE_SDK[claude-agent-sdk-python]
+        QUERY[query() function]
+        OPTIONS[ClaudeAgentOptions]
+    end
+
+    subgraph External["🌐 External Services"]
+        ANTHROPIC[Anthropic API<br/>Claude 3.5 Sonnet]
+    end
+
+    UI --> SSE_CLIENT
+    COMP --> STATE_MGR
+    SSE_CLIENT --> MOD_API
+    STATE_MGR --> MOD_API
+
+    MOD_API --> MOD_LOGIC
+    MOD_LOGIC --> A2A_CLIENT
+
+    A2A_CLIENT -->|A2A: tasks/send| CONF
+    A2A_CLIENT -->|A2A: tasks/send| LAO
+    A2A_CLIENT -->|A2A: tasks/send| MOZI
+
+    CONF --> CLAUDE_SDK
+    LAO --> CLAUDE_SDK
+    MOZI --> CLAUDE_SDK
+
+    CLAUDE_SDK --> QUERY
+    QUERY --> ANTHROPIC
+
+    MOD_API -->|SSE Stream| SSE_CLIENT
+
+    style Frontend fill:#E1F5FE,stroke:#0277BD,stroke-width:3px
+    style Moderator fill:#FFF3E0,stroke:#E65100,stroke-width:3px
+    style Philosophers fill:#F3E5F5,stroke:#9370DB,stroke-width:3px
+    style AgentSDK fill:#FFE0B2,stroke:#EF6C00,stroke-width:3px
+                </div>
+
+                <h3>Technology Stack</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Component</th>
+                            <th>Technology</th>
+                            <th>Key Packages</th>
+                            <th>Purpose</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>React Frontend</strong></td>
+                            <td>React 18 + TypeScript + Vite</td>
+                            <td>
+                                • <code>react</code> (UI)<br>
+                                • <code>typescript</code> (Type safety)<br>
+                                • <code>tailwindcss</code> + <code>daisyui</code> (Styling)<br>
+                                • <code>zustand</code> (State management)<br>
+                                • <code>react-markdown</code> (Rendering)
+                            </td>
+                            <td>Real-time dialogue interface with SSE streaming</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Moderator Server</strong></td>
+                            <td>Python 3.11+ FastAPI</td>
+                            <td>
+                                • <code>fastapi</code> (API framework)<br>
+                                • <code>uvicorn</code> (ASGI server)<br>
+                                • <code>httpx</code> (A2A client)<br>
+                                • <code>sse-starlette</code> (SSE streaming)
+                            </td>
+                            <td>Orchestrate multi-agent dialogue, stream to frontend</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Philosopher Agents</strong></td>
+                            <td>Python 3.11+ A2A Server</td>
+                            <td>
+                                • <code>a2a-python</code> (A2A SDK)<br>
+                                • <code>claude-agent-sdk</code> (Claude integration)<br>
+                                • <code>fastapi</code> (Server framework)
+                            </td>
+                            <td>A2A-compliant agents with Claude-powered reasoning</td>
+                        </tr>
+                        <tr>
+                            <td><strong>LLM Provider</strong></td>
+                            <td>Anthropic Claude</td>
+                            <td>
+                                • <code>anthropic</code> (Official SDK)<br>
+                                • Claude 3.5 Sonnet model
+                            </td>
+                            <td>Philosophical reasoning and natural language generation</td>
+                        </tr>
+                        <tr>
+                            <td><strong>Deployment</strong></td>
+                            <td>Docker + Docker Compose</td>
+                            <td>
+                                • Multi-stage builds<br>
+                                • Health checks<br>
+                                • Auto-restart
+                            </td>
+                            <td>Local dev and production deployment</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>React Frontend Architecture</h3>
+                <div class="mermaid">
+graph LR
+    subgraph App["React App Structure"]
+        ROOT[App.tsx<br/>Root Component]
+
+        subgraph Pages
+            HOME[HomePage.tsx]
+            DIALOGUE[DialoguePage.tsx]
+            ABOUT[AboutPage.tsx]
+        end
+
+        subgraph Components
+            NAV[Navigation.tsx]
+            PHIL[PhilosopherCard.tsx]
+            CHAT[ChatMessage.tsx]
+            TRANSCRIPT[TranscriptView.tsx]
+        end
+
+        subgraph Services
+            A2A_SVC[a2aService.ts<br/>SSE Client]
+            API[apiClient.ts<br/>HTTP Client]
+        end
+
+        subgraph State
+            STORE[dialogueStore.ts<br/>Zustand Store]
+        end
+
+        subgraph Types
+            TYPES[types.ts<br/>TypeScript Interfaces]
+        end
+    end
+
+    ROOT --> NAV
+    ROOT --> HOME
+    ROOT --> DIALOGUE
+    ROOT --> ABOUT
+
+    DIALOGUE --> PHIL
+    DIALOGUE --> CHAT
+    DIALOGUE --> TRANSCRIPT
+
+    CHAT --> A2A_SVC
+    TRANSCRIPT --> STORE
+
+    A2A_SVC --> API
+    A2A_SVC --> STORE
+
+    PHIL --> TYPES
+    CHAT --> TYPES
+                </div>
+
+                <h3>Data Flow: User Starts Dialogue</h3>
+                <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant UI as React UI
+    participant SSE as SSE Client
+    participant Mod as Moderator
+    participant Conf as Confucius
+    participant Lao as Lao Tse
+    participant Mozi as Mozi
+    participant Claude as Claude API
+
+    User->>UI: Click "Start Dialogue"<br/>Topic: "What is a good life?"
+    UI->>SSE: EventSource("/api/dialogue/stream")
+    SSE->>Mod: POST /dialogue/start<br/>{topic: "..."}
+
+    Note over Mod: Round 1: Initial Positions
+
+    Mod->>Conf: A2A tasks/send<br/>"Share your view"
+    Conf->>Claude: query(prompt + Confucian system)
+    Claude-->>Conf: "Good life through virtue (德)..."
+    Conf-->>Mod: Task result
+    Mod->>SSE: SSE: {philosopher: "confucius", text: "..."}
+    SSE->>UI: Update message list
+
+    Mod->>Lao: A2A tasks/send<br/>"Share your view"
+    Lao->>Claude: query(prompt + Daoist system)
+    Claude-->>Lao: "Good life through wu wei (無為)..."
+    Lao-->>Mod: Task result
+    Mod->>SSE: SSE: {philosopher: "laotse", text: "..."}
+    SSE->>UI: Update message list
+
+    Mod->>Mozi: A2A tasks/send<br/>"Share your view"
+    Mozi->>Claude: query(prompt + Mohist system)
+    Claude-->>Mozi: "Good life through universal love..."
+    Mozi-->>Mod: Task result
+    Mod->>SSE: SSE: {philosopher: "mozi", text: "..."}
+    SSE->>UI: Update message list
+
+    Note over Mod: Round 2: Critiques (similar flow)
+    Note over Mod: Round 3: Synthesis (similar flow)
+
+    Mod->>SSE: SSE: {type: "complete", transcript: [...]}
+    SSE->>UI: Show "Dialogue Complete"
+    UI->>User: Display full transcript + export option
+                </div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> Implementation Code: Claude Agent SDK + A2A</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Confucius Agent with Claude Agent SDK</h3>
+                <pre># agents/confucius/main.py
+
+import asyncio
+from fastapi import FastAPI
+from a2a import A2AServer, AgentCard, Task, TaskStatus, Artifact, TextPart
+from claude_agent_sdk import query, ClaudeAgentOptions
+import json
+
+app = FastAPI()
+
+class ConfuciusAgent:
+    """Confucian philosopher agent using Claude Agent SDK"""
+
+    def __init__(self):
+        # Load agent card
+        with open('agent_card.json') as f:
+            self.card = json.load(f)
+
+        # Confucian system prompt
+        self.system_prompt = """You are Confucius (孔子, 551-479 BCE).
+
+Core Philosophy:
+- Ren (仁): Benevolence, humaneness
+- Li (禮): Ritual propriety
+- Xiao (孝): Filial piety
+- Junzi (君子): The exemplary person
+
+Speak with wisdom, citing Zhou Dynasty traditions.
+Emphasize social harmony through proper relationships.
+Keep responses under 200 words unless asked for detail."""
+
+        # Conversation history per context
+        self.conversations = {}
+
+    async def handle_task(self, task_data: dict) -> dict:
+        """Process A2A task using Claude Agent SDK"""
+
+        # Extract task details
+        task_id = task_data.get("id", f"task-{hash(str(task_data))}")
+        parts = task_data.get("parts", [])
+
+        if not parts or parts[0].get("type") != "text":
+            return self._error_response(task_id, "No text content")
+
+        user_message = parts[0]["text"]
+        context_id = task_data.get("contextId", "default")
+
+        # Get conversation history
+        if context_id not in self.conversations:
+            self.conversations[context_id] = []
+
+        # Add context from previous philosophers if provided
+        metadata = task_data.get("metadata", {})
+        context_messages = metadata.get("context", [])
+
+        if context_messages:
+            context_str = "\n\n".join([
+                f"Previous philosopher said:\n{msg}"
+                for msg in context_messages
+            ])
+            user_message = f"{context_str}\n\nNow respond to:\n{user_message}"
+
+        # Configure Claude Agent SDK
+        options = ClaudeAgentOptions(
+            system_prompt=self.system_prompt,
+            model="claude-3-5-sonnet-20241022",
+            max_tokens=1000
+        )
+
+        try:
+            # Query Claude using Agent SDK
+            full_response = ""
+            async for message in query(prompt=user_message, options=options):
+                if hasattr(message, 'text'):
+                    full_response += message.text
+
+            # Update conversation history
+            self.conversations[context_id].append({
+                "role": "user",
+                "content": user_message
+            })
+            self.conversations[context_id].append({
+                "role": "assistant",
+                "content": full_response
+            })
+
+            # Return A2A Task response
+            return {
+                "id": task_id,
+                "contextId": context_id,
+                "status": {
+                    "state": "completed",
+                    "timestamp": self._timestamp()
+                },
+                "artifacts": [{
+                    "artifactId": f"conf-{task_id}",
+                    "parts": [{
+                        "kind": "text",
+                        "text": full_response
+                    }]
+                }],
+                "kind": "task"
+            }
+
+        except Exception as e:
+            return self._error_response(task_id, str(e))
+
+    def _error_response(self, task_id: str, error: str) -> dict:
+        return {
+            "id": task_id,
+            "status": {"state": "failed", "message": error},
+            "kind": "task"
+        }
+
+    def _timestamp(self):
+        from datetime import datetime
+        return datetime.utcnow().isoformat() + "Z"
+
+# Create agent instance
+agent = ConfuciusAgent()
+
+# A2A endpoints
+@app.post("/")
+async def handle_a2a_request(request: dict):
+    """Handle incoming A2A JSON-RPC requests"""
+    method = request.get("method")
+    params = request.get("params", {})
+    req_id = request.get("id")
+
+    if method == "tasks/send":
+        task = params.get("task", {})
+        task["metadata"] = params.get("metadata", {})
+        result = await agent.handle_task(task)
+        return {"jsonrpc": "2.0", "result": result, "id": req_id}
+
+    elif method == "agent/getCard":
+        return {"jsonrpc": "2.0", "result": agent.card, "id": req_id}
+
+    else:
+        return {
+            "jsonrpc": "2.0",
+            "error": {"code": -32601, "message": "Method not found"},
+            "id": req_id
+        }
+
+@app.get("/.well-known/agent.json")
+async def get_agent_card():
+    """Serve agent card for discovery"""
+    return agent.card
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8001)</pre>
+
+                <h3>Moderator with A2A Client</h3>
+                <pre># moderator/main.py
+
+from fastapi import FastAPI
+from fastapi.responses import StreamingResponse
+import httpx
+import asyncio
+import json
+
+app = FastAPI()
+
+PHILOSOPHERS = {
+    "confucius": "http://localhost:8001",
+    "laotse": "http://localhost:8002",
+    "mozi": "http://localhost:8003"
+}
+
+class DialogueModerator:
+    def __init__(self):
+        self.transcript = []
+        self.round_count = 0
+
+    async def send_a2a_task(self, philosopher: str, prompt: str, context: list = None):
+        """Send A2A task to philosopher agent"""
+        url = PHILOSOPHERS[philosopher]
+
+        request = {
+            "jsonrpc": "2.0",
+            "method": "tasks/send",
+            "params": {
+                "task": {
+                    "parts": [{"type": "text", "text": prompt}]
+                },
+                "metadata": {
+                    "conversationId": f"dialogue-{self.round_count}",
+                    "context": context or []
+                }
+            },
+            "id": f"mod-{philosopher}-r{self.round_count}"
+        }
+
+        async with httpx.AsyncClient(timeout=60.0) as client:
+            response = await client.post(url, json=request)
+            result = response.json()
+
+            if "result" in result:
+                task = result["result"]
+                if task["status"]["state"] == "completed":
+                    return task["artifacts"][0]["parts"][0]["text"]
+                else:
+                    raise Exception(f"Task not completed: {task['status']}")
+            else:
+                raise Exception(f"A2A error: {result.get('error')}")
+
+    async def run_dialogue(self, topic: str):
+        """Execute full 3-round dialogue"""
+        self.round_count += 1
+
+        # Round 1: Initial positions
+        for phil in ["confucius", "laotse", "mozi"]:
+            prompt = f"Share your philosophical view on: {topic}"
+            response = await self.send_a2a_task(phil, prompt)
+
+            entry = {
+                "round": 1,
+                "philosopher": phil,
+                "type": "position",
+                "response": response
+            }
+            self.transcript.append(entry)
+            yield json.dumps(entry) + "\n"
+
+        # Round 2: Critiques (similar pattern)
+        # Round 3: Synthesis (similar pattern)
+
+        yield json.dumps({"type": "complete", "transcript": self.transcript}) + "\n"
+
+@app.post("/api/dialogue/start")
+async def start_dialogue(topic: str = "What is a good life?"):
+    """Start dialogue and stream results via SSE"""
+    moderator = DialogueModerator()
+
+    async def event_generator():
+        async for event in moderator.run_dialogue(topic):
+            yield f"data: {event}\n\n"
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream"
+    )
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=8000)</pre>
+
+                <h3>React SSE Client</h3>
+                <pre>// frontend/src/services/a2aService.ts
+
+export interface PhilosopherMessage {
+  round: number;
+  philosopher: 'confucius' | 'laotse' | 'mozi';
+  type: 'position' | 'critique' | 'synthesis';
+  response: string;
+}
+
+export class A2ADialogueService {
+  private eventSource: EventSource | null = null;
+
+  startDialogue(
+    topic: string,
+    onMessage: (msg: PhilosopherMessage) => void,
+    onComplete: (transcript: PhilosopherMessage[]) => void,
+    onError: (error: Event) => void
+  ) {
+    // Close existing connection
+    this.close();
+
+    // Create SSE connection
+    const url = `/api/dialogue/start?topic=${encodeURIComponent(topic)}`;
+    this.eventSource = new EventSource(url);
+
+    this.eventSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+
+      if (data.type === 'complete') {
+        onComplete(data.transcript);
+        this.close();
+      } else {
+        onMessage(data as PhilosopherMessage);
+      }
+    };
+
+    this.eventSource.onerror = (error) => {
+      onError(error);
+      this.close();
+    };
+  }
+
+  close() {
+    if (this.eventSource) {
+      this.eventSource.close();
+      this.eventSource = null;
+    }
+  }
+}
+
+export const a2aService = new A2ADialogueService();</pre>
+
+                <h3>React Dialogue Component</h3>
+                <pre>// frontend/src/components/DialoguePage.tsx
+
+import React, { useState } from 'react';
+import { a2aService, PhilosopherMessage } from '../services/a2aService';
+
+export const DialoguePage: React.FC = () => {
+  const [topic, setTopic] = useState('What is a good life?');
+  const [messages, setMessages] = useState<PhilosopherMessage[]>([]);
+  const [isActive, setIsActive] = useState(false);
+
+  const startDialogue = () => {
+    setMessages([]);
+    setIsActive(true);
+
+    a2aService.startDialogue(
+      topic,
+      // On message
+      (msg) => {
+        setMessages(prev => [...prev, msg]);
+      },
+      // On complete
+      (transcript) => {
+        setIsActive(false);
+        console.log('Dialogue complete:', transcript);
+      },
+      // On error
+      (error) => {
+        console.error('SSE error:', error);
+        setIsActive(false);
+      }
+    );
+  };
+
+  const getPhilosopherColor = (phil: string) => {
+    const colors = {
+      confucius: 'bg-blue-100 border-blue-500',
+      laotse: 'bg-green-100 border-green-500',
+      mozi: 'bg-purple-100 border-purple-500'
+    };
+    return colors[phil] || 'bg-gray-100';
+  };
+
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold mb-6">☕ Confucian Café</h1>
+
+      <div className="mb-6">
+        <input
+          type="text"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          className="input input-bordered w-full"
+          placeholder="Enter discussion topic..."
+          disabled={isActive}
+        />
+        <button
+          onClick={startDialogue}
+          disabled={isActive}
+          className="btn btn-primary mt-3"
+        >
+          {isActive ? 'Dialogue in Progress...' : 'Start Dialogue'}
+        </button>
+      </div>
+
+      <div className="space-y-4">
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            className={`card border-l-4 p-4 ${getPhilosopherColor(msg.philosopher)}`}
+          >
+            <div className="font-semibold mb-2">
+              {msg.philosopher.toUpperCase()} - Round {msg.round} ({msg.type})
+            </div>
+            <div className="text-sm whitespace-pre-wrap">
+              {msg.response}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {!isActive && messages.length > 0 && (
+        <button className="btn btn-outline mt-6">
+          Export Transcript
+        </button>
+      )}
+    </div>
+  );
+};</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> Project Structure & Implementation Roadmap</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Complete Repository Structure</h3>
+                <pre>confucian-cafe/
+├── README.md
+├── LICENSE
+├── .gitignore
+├── docker-compose.yml
+├── .env.example
+│
+├── agents/                          # Philosopher agents (A2A servers)
+│   ├── confucius/
+│   │   ├── main.py                 # FastAPI + Claude Agent SDK
+│   │   ├── agent_card.json         # A2A agent card
+│   │   ├── prompts.py              # System prompts
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   ├── laotse/
+│   │   ├── main.py
+│   │   ├── agent_card.json
+│   │   ├── prompts.py
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
+│   └── mozi/
+│       ├── main.py
+│       ├── agent_card.json
+│       ├── prompts.py
+│       ├── Dockerfile
+│       └── requirements.txt
+│
+├── moderator/                       # Dialogue orchestrator
+│   ├── main.py                     # FastAPI with A2A client
+│   ├── dialogue_manager.py         # Multi-round logic
+│   ├── a2a_client.py               # A2A protocol client
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── frontend/                        # React application
+│   ├── public/
+│   │   └── index.html
+│   ├── src/
+│   │   ├── App.tsx
+│   │   ├── main.tsx
+│   │   ├── components/
+│   │   │   ├── Navigation.tsx
+│   │   │   ├── DialoguePage.tsx
+│   │   │   ├── PhilosopherCard.tsx
+│   │   │   ├── ChatMessage.tsx
+│   │   │   └── TranscriptView.tsx
+│   │   ├── services/
+│   │   │   ├── a2aService.ts      # SSE client
+│   │   │   └── apiClient.ts       # HTTP client
+│   │   ├── stores/
+│   │   │   └── dialogueStore.ts   # Zustand store
+│   │   ├── types/
+│   │   │   └── index.ts           # TypeScript types
+│   │   └── styles/
+│   │       └── globals.css
+│   ├── package.json
+│   ├── tsconfig.json
+│   ├── vite.config.ts
+│   ├── tailwind.config.js
+│   └── Dockerfile
+│
+├── docs/                            # Documentation
+│   ├── ARCHITECTURE.md
+│   ├── A2A_PROTOCOL.md
+│   └── DEPLOYMENT.md
+│
+└── scripts/                         # Utility scripts
+    ├── setup.sh
+    ├── test_agents.py
+    └── export_transcript.py</pre>
+
+                <h3>Implementation Phases</h3>
+                <div class="card priority">
+                    <h4>Phase 1: Core Agent Implementation (Week 1-2)</h4>
+                    <ul class="dense-list">
+                        <li>✅ Set up repository: <code>github.com/yourname/confucian-cafe</code></li>
+                        <li>✅ Install dependencies: <code>claude-agent-sdk</code>, <code>a2a-python</code>, <code>fastapi</code></li>
+                        <li>✅ Implement Confucius agent with Claude Agent SDK</li>
+                        <li>✅ Create agent card JSON with NO provider field (as requested)</li>
+                        <li>✅ Test A2A communication locally: <code>curl http://localhost:8001/.well-known/agent.json</code></li>
+                        <li>✅ Clone for Lao Tse and Mozi agents (adjust system prompts)</li>
+                    </ul>
+                </div>
+
+                <div class="card priority">
+                    <h4>Phase 2: Moderator & A2A Integration (Week 3)</h4>
+                    <ul class="dense-list">
+                        <li>✅ Build FastAPI moderator with A2A client (httpx)</li>
+                        <li>✅ Implement 3-round dialogue logic (Initial → Critique → Synthesis)</li>
+                        <li>✅ Add SSE streaming endpoint for real-time updates</li>
+                        <li>✅ Test full dialogue flow with all 3 agents</li>
+                    </ul>
+                </div>
+
+                <div class="card priority">
+                    <h4>Phase 3: React Frontend (Week 4)</h4>
+                    <ul class="dense-list">
+                        <li>✅ Scaffold React app with Vite + TypeScript</li>
+                        <li>✅ Install: <code>react</code>, <code>zustand</code>, <code>tailwindcss</code>, <code>daisyui</code></li>
+                        <li>✅ Build SSE client service (<code>a2aService.ts</code>)</li>
+                        <li>✅ Create dialogue page with real-time message display</li>
+                        <li>✅ Add philosopher cards with color coding</li>
+                        <li>✅ Implement transcript export (Markdown/PDF)</li>
+                    </ul>
+                </div>
+
+                <div class="card priority">
+                    <h4>Phase 4: Docker & Deployment (Week 5)</h4>
+                    <ul class="dense-list">
+                        <li>✅ Create Dockerfiles for all services</li>
+                        <li>✅ Write <code>docker-compose.yml</code> for local orchestration</li>
+                        <li>✅ Test full stack: <code>docker-compose up</code></li>
+                        <li>✅ Deploy to cloud (Google Cloud Run, Railway, or Vercel)</li>
+                        <li>✅ Set up CI/CD with GitHub Actions</li>
+                    </ul>
+                </div>
+
+                <h3>Key Commands</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task</th>
+                            <th>Command</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>Install Python deps</strong></td>
+                            <td><code>pip install claude-agent-sdk a2a-python fastapi uvicorn httpx sse-starlette</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Install React deps</strong></td>
+                            <td><code>npm install react react-dom zustand tailwindcss daisyui</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Run Confucius agent</strong></td>
+                            <td><code>cd agents/confucius && python main.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Run moderator</strong></td>
+                            <td><code>cd moderator && python main.py</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Run React dev server</strong></td>
+                            <td><code>cd frontend && npm run dev</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Test agent card</strong></td>
+                            <td><code>curl http://localhost:8001/.well-known/agent.json | jq</code></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Docker Compose (all)</strong></td>
+                            <td><code>docker-compose up --build</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <h3>Environment Variables</h3>
+                <pre># .env.example
+
+# Anthropic API Key for Claude Agent SDK
+ANTHROPIC_API_KEY=sk-ant-xxxxx
+
+# Agent URLs (for moderator)
+CONFUCIUS_URL=http://localhost:8001
+LAOTSE_URL=http://localhost:8002
+MOZI_URL=http://localhost:8003
+
+# Moderator URL (for frontend)
+VITE_MODERATOR_URL=http://localhost:8000</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="text-align: center; padding: 32px 20px; background: linear-gradient(135deg, rgba(139, 0, 0, 0.05), rgba(255, 215, 0, 0.05)); margin: 20px 12px; border-radius: 4px;">
+            <h2 style="margin: 0; font-size: 24px; color: var(--chinese-red);">☕ Ready to Build the Confucian Café</h2>
+            <p style="margin: 16px 0 0 0; font-size: 15px; color: var(--level-3); line-height: 1.6;">
+                This architecture combines the best of modern AI protocols:
+                <br><br>
+                <strong>A2A Protocol</strong> for agent-to-agent communication •
+                <strong>Claude Agent SDK</strong> for philosophical reasoning •
+                <strong>React + SSE</strong> for real-time UI
+                <br><br>
+                <span style="font-size: 14px; font-style: italic;">
+                "When the way prevails in the world, show yourself. When it does not, hide." — Analects 8:13
+                </span>
+                <br><br>
+                <strong style="color: var(--chinese-red);">Let ancient wisdom flow through modern protocols.</strong>
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#F5F5DC',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#8B0000',
+                lineColor: '#8B0000',
+                secondaryColor: '#FFD700',
+                tertiaryColor: '#FFFEF0'
+            }
+        });
+
+        function toggle(header) {
+            const collapsible = header.parentElement;
+            collapsible.classList.toggle('open');
+        }
+
+        function toggleAll() {
+            const btn = document.querySelector('.expand-all-btn');
+            const collapsibles = document.querySelectorAll('.collapsible');
+            const allOpen = Array.from(collapsibles).every(c => c.classList.contains('open'));
+
+            if (allOpen) {
+                collapsibles.forEach(c => c.classList.remove('open'));
+                btn.textContent = 'Expand All';
+            } else {
+                collapsibles.forEach(c => c.classList.add('open'));
+                btn.textContent = 'Collapse All';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            window.scrollTo(0, 0);
+        });
+    </script>
+</body>
+</html>

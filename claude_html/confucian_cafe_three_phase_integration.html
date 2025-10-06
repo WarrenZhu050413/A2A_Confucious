@@ -1,0 +1,965 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Confucian Café · Phase Integration Prototype</title>
+  <style>
+    :root {
+      --ink: #1a1a1a;
+      --bg: #f4f1e8;
+      --panel: rgba(255, 255, 255, 0.97);
+      --red: #8b1414;
+      --red-soft: rgba(139, 20, 20, 0.16);
+      --gold: #d99a00;
+      --jade: #0ea16a;
+      --slate: rgba(25, 25, 25, 0.52);
+      --muted: rgba(25, 25, 25, 0.34);
+      --border: rgba(139, 20, 20, 0.15);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.12);
+      --glass: rgba(255, 255, 255, 0.55);
+      --lane-bg: rgba(255, 255, 255, 0.86);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: radial-gradient(circle at 50% -10%, rgba(217, 154, 0, 0.16), transparent 52%),
+                  radial-gradient(circle at 100% 0%, rgba(139, 20, 20, 0.18), transparent 48%),
+                  linear-gradient(115deg, #fbfaf5 0%, var(--bg) 52%, #fdf7ea 100%);
+      color: var(--ink);
+      font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      min-height: 100vh;
+      padding-bottom: 72px;
+    }
+
+    .shell {
+      width: min(1380px, 96vw);
+      margin: 38px auto 0 auto;
+      padding: 22px 26px 28px 26px;
+      background: rgba(255, 255, 255, 0.72);
+      border-radius: 26px;
+      border: 1px solid rgba(255, 255, 255, 0.48);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      display: grid;
+      gap: 24px;
+    }
+
+    header.banner {
+      display: grid;
+      gap: 12px;
+    }
+
+    header.banner h1 {
+      font-size: 34px;
+      font-weight: 800;
+      letter-spacing: -0.6px;
+      color: var(--ink);
+    }
+
+    header.banner p {
+      color: var(--slate);
+      font-size: 15px;
+      max-width: 780px;
+    }
+
+    .phase-nav {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .phase-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .phase-chip.active {
+      background: linear-gradient(135deg, rgba(139, 20, 20, 0.92), rgba(205, 92, 92, 0.88));
+      color: #fff;
+      border-color: transparent;
+      box-shadow: 0 14px 32px rgba(139, 20, 20, 0.26);
+    }
+
+    .phase-chip span.progress {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.2);
+      font-size: 12px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 320px 1fr 320px;
+      gap: 18px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border-radius: 18px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 18px;
+      display: grid;
+      gap: 16px;
+      box-shadow: 0 18px 42px rgba(0, 0, 0, 0.08);
+    }
+
+    .panel header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .panel header h2 {
+      font-size: 15px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--red);
+    }
+
+    .badge {
+      padding: 4px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(139, 20, 20, 0.26);
+      color: var(--red);
+      font-size: 11px;
+      text-transform: uppercase;
+      background: rgba(139, 20, 20, 0.08);
+      letter-spacing: 0.4px;
+    }
+
+    .journey-stack {
+      display: grid;
+      gap: 12px;
+    }
+
+    .journey-card {
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 14px;
+      padding: 12px 14px;
+      background: rgba(255, 255, 255, 0.94);
+      display: grid;
+      gap: 6px;
+      position: relative;
+    }
+
+    .journey-card.active {
+      border-color: rgba(139, 20, 20, 0.4);
+      box-shadow: 0 16px 34px rgba(139, 20, 20, 0.18);
+    }
+
+    .journey-card strong {
+      font-size: 14px;
+      color: var(--red);
+    }
+
+    .journey-card p {
+      font-size: 13px;
+      color: var(--slate);
+    }
+
+    .journey-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag {
+      padding: 4px 8px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--muted);
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .lane-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .lane {
+      background: var(--lane-bg);
+      border-radius: 16px;
+      border: 1px solid rgba(0, 0, 0, 0.06);
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+      position: relative;
+      min-height: 420px;
+    }
+
+    .lane.active {
+      border-color: rgba(139, 20, 20, 0.36);
+      box-shadow: 0 18px 40px rgba(139, 20, 20, 0.12);
+    }
+
+    .lane header {
+      display: grid;
+      gap: 4px;
+    }
+
+    .lane header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--red);
+    }
+
+    .lane header span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .lane-body {
+      display: grid;
+      gap: 10px;
+    }
+
+    .card {
+      border-radius: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      background: rgba(255, 255, 255, 0.98);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .card::after {
+      content: attr(data-phase);
+      position: absolute;
+      top: 10px;
+      right: 12px;
+      font-size: 11px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .card.active {
+      border-color: rgba(139, 20, 20, 0.32);
+      box-shadow: 0 16px 30px rgba(139, 20, 20, 0.14);
+    }
+
+    .card header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .card h4 {
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    .card p {
+      color: var(--slate);
+      font-size: 13px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .chip {
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.06);
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .bridge {
+      border-left: 3px solid var(--jade);
+      padding: 6px 10px;
+      border-radius: 8px;
+      background: rgba(14, 161, 106, 0.12);
+      color: var(--jade);
+      font-size: 12px;
+    }
+
+    .translation {
+      border-left: 3px solid rgba(139, 20, 20, 0.4);
+      background: rgba(139, 20, 20, 0.08);
+      border-radius: 8px;
+      padding: 6px 10px;
+      font-size: 12.5px;
+      color: var(--slate);
+    }
+
+    .empty {
+      display: grid;
+      place-items: center;
+      border: 1px dashed rgba(0, 0, 0, 0.12);
+      border-radius: 12px;
+      padding: 28px;
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    .console-form {
+      display: grid;
+      gap: 12px;
+    }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    select, textarea {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      padding: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.94);
+      color: var(--ink);
+    }
+
+    textarea { min-height: 86px; resize: vertical; }
+
+    button.primary {
+      border: none;
+      border-radius: 999px;
+      padding: 10px 20px;
+      background: linear-gradient(135deg, rgba(139, 20, 20, 0.92), rgba(205, 92, 92, 0.88));
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      justify-self: flex-end;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    button.primary:hover { transform: translateY(-1px); box-shadow: 0 12px 24px rgba(139, 20, 20, 0.25); }
+
+    .request-feed {
+      display: grid;
+      gap: 10px;
+      max-height: 220px;
+      overflow-y: auto;
+    }
+
+    .request-card {
+      border-radius: 10px;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      padding: 10px 12px;
+      display: grid;
+      gap: 4px;
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .request-card header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status {
+      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    .status.pending {
+      background: rgba(217, 154, 0, 0.16);
+      color: #a16c00;
+    }
+
+    .status.resolved {
+      background: rgba(14, 161, 106, 0.14);
+      color: var(--jade);
+    }
+
+    .insight-box {
+      border-radius: 14px;
+      border: 1px dashed rgba(139, 20, 20, 0.24);
+      padding: 14px;
+      display: grid;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.86);
+    }
+
+    .insight-box h3 {
+      font-size: 14px;
+      color: var(--red);
+    }
+
+    .insight-box ul {
+      list-style: none;
+      display: grid;
+      gap: 6px;
+      color: var(--slate);
+      font-size: 13px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding-top: 12px;
+    }
+
+    @media (max-width: 1220px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+  </style>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="banner">
+      <h1>Confucian Café · Phase Integration Prototype</h1>
+      <p>
+        Interactive concept deck illustrating how Moderator-led Confucian dialogues travel across three phases.
+        A mocked LLM backend feeds new cards into the lanes so you can observe how anchors turn into critiques
+        and finish as blended directives.
+      </p>
+      <nav class="phase-nav" data-testid="phase-nav"></nav>
+    </header>
+
+    <div class="grid">
+      <aside class="panel" id="left-panel"></aside>
+      <main class="panel" id="center-panel"></main>
+      <aside class="panel" id="right-panel"></aside>
+    </div>
+
+    <footer>Mock backend latency ~0.9s. Each new critique or synthesis memo links upstream artifacts so transitions stay legible.</footer>
+  </div>
+  <div id="root" style="display:none"></div>
+
+  <script type="text/babel">
+    const phaseMeta = {
+      introduce: {
+        id: 'introduce',
+        label: 'Phase 1 · Introduce',
+        focus: 'Anchor positions in English with optional translations.',
+        cadence: 'Moderator orchestrates; philosophers drop anchor cards.',
+        outputs: ['Anchored stance cards', 'Clarifying question backlog', 'Optional bilingual layer'],
+      },
+      'cross-response': {
+        id: 'cross-response',
+        label: 'Phase 2 · Cross-Response',
+        focus: 'Agents cite anchors, challenge sequencing, and request context.',
+        cadence: 'Moderator rotates critiques; live translation toggles per turn.',
+        outputs: ['Validated claims ledger', 'Escalation tags for moderator', 'Critique threads feeding synthesis'],
+      },
+      synthesis: {
+        id: 'synthesis',
+        label: 'Phase 3 · Synthesis',
+        focus: 'Combine anchors with validated critiques; stage bilingual memos.',
+        cadence: 'Moderator plus human prompter stitch directives.',
+        outputs: ['Action memo + bilingual abstract', 'Consensus heatmap', 'Scenario refresh prompts'],
+      },
+    };
+
+    const scriptedMoments = [
+      {
+        id: 'm1',
+        phase: 'introduce',
+        stamp: '09:02',
+        label: 'Orientation Brief',
+        anchor: 'Scenario primed; Confucius and Mozi log anchors with translation hooks.',
+        progress: { introduce: 48 },
+        messages: [
+          {
+            id: 'c1',
+            speaker: 'Moderator',
+            role: 'Scenario Brief',
+            text: 'River levees near Luoyang show fatigue; rehearse duties so engineering crews and ritual councils move together.',
+            tags: ['Scenario', 'Prompt'],
+          },
+          {
+            id: 'c2',
+            speaker: 'Confucius',
+            role: 'Anchor · Ritual Readiness',
+            text: 'Encode duty drills as ceremony so every hamlet rehearses the flood choreography before the river swells.',
+            translation: '未雨绸缪，礼就是演练；乡社先排练水患之序。',
+            tags: ['Anchor', 'Ritual'],
+            bridge: 'Feeds Phase 2 critique prompts about timing.',
+          },
+          {
+            id: 'c3',
+            speaker: 'Mozi',
+            role: 'Anchor · Utility Ledger',
+            text: 'Log water levels hourly, deploy crews when thresholds trip, debate rites once evacuation corridors clear.',
+            tags: ['Anchor', 'Utility'],
+            bridge: 'Metrics toggle published for Phase 2 challenges.',
+          },
+        ],
+        journal: 'Anchors published with live metrics toggles; cross-response lane primed with duty vs. utility tension.',
+      },
+      {
+        id: 'm2',
+        phase: 'cross-response',
+        stamp: '09:05',
+        label: 'Critique Volley',
+        anchor: 'Mozi pressures ritual timing; Laozi reframes toward flexible guardrails.',
+        progress: { introduce: 100, 'cross-response': 62 },
+        messages: [
+          {
+            id: 'c4',
+            speaker: 'Mozi',
+            target: 'Confucius',
+            role: 'Challenge · Tempo',
+            text: 'If ceremony scripts action, embed the moment we pivot to crews—do not let recitations outlast rising water.',
+            tags: ['Critique', 'Tempo'],
+            bridge: 'Records tension for synthesis planner.',
+          },
+          {
+            id: 'c5',
+            speaker: 'Laozi',
+            target: 'Mozi',
+            role: 'Reframe · Soft Guard',
+            text: 'Water needs soft banks; adopt Confucian charts as bamboo frames so crews flex without shattering order.',
+            translation: '水性需柔岸；以礼图为竹骨，工队可随势而行。',
+            tags: ['Bridge'],
+            bridge: 'Keeps Phase 1 anchor relevant; seeds synthesis merge.',
+          },
+        ],
+        journal: 'Critique ledger now tracks tempo risks and flexible guardrails; synthesis queue enriched with merge candidates.',
+      },
+      {
+        id: 'm3',
+        phase: 'synthesis',
+        stamp: '09:08',
+        label: 'Directive Draft',
+        anchor: 'Moderator fuses anchors + critiques; human prompt adds bilingual brief requirement.',
+        progress: { 'cross-response': 100, synthesis: 78 },
+        messages: [
+          {
+            id: 'c6',
+            speaker: 'Moderator',
+            role: 'Synthesis Frame',
+            text: 'Draft directive: encode Mozi’s threshold metrics inside Confucian duty chart; Laozi’s flex zones become escalation exceptions.',
+            tags: ['Synthesis'],
+            bridge: 'Outputs bilingual memo skeleton + analytics feed.',
+          },
+          {
+            id: 'c7',
+            speaker: 'Human Prompter',
+            role: 'Prompt Injection',
+            text: 'Add bilingual quick brief for governors; highlight the water-level trigger that convenes the ritual council.',
+            tags: ['Human Prompt'],
+            bridge: 'Loops requirement back to Phase 1 rehearsal library.',
+          },
+        ],
+        journal: 'Synthesis lane exporting directive skeleton; memo components flagged to refresh Phase 1 rehearsal decks.',
+      },
+    ];
+
+    const mockLLMResponses = {
+      introduce: [
+        {
+          speaker: 'Xunzi',
+          role: 'LLM · Ritual Audit',
+          text: 'Incorporate weather augury within the duty drill so ritual masters announce thresholds alongside engineers.',
+          tags: ['Augment'],
+          bridge: 'Pushes dual-trigger checklist to cross-response lane.',
+        },
+      ],
+      'cross-response': [
+        {
+          speaker: 'Mozi',
+          role: 'LLM · Metrics Push',
+          text: 'Confirm each rite has a paired measurement; if the gauge spikes, skip chanting and move to levee patch teams.',
+          tags: ['Critique'],
+          bridge: 'Auto-routes to synthesis backlog as mandatory clause.',
+        },
+        {
+          speaker: 'Laozi',
+          role: 'LLM · Flow Reminder',
+          text: 'Guard against rigidity: keep one lane open for spontaneous neighbor aid, recorded afterward as living ritual.',
+          tags: ['Bridge'],
+          bridge: 'Creates synthesis note to codify improvisation allowances.',
+        },
+      ],
+      synthesis: [
+        {
+          speaker: 'Moderator',
+          role: 'LLM · Memo Polisher',
+          text: 'Final memo paragraph: “Duty carts roll when River Gauge 4 glows; ritual council convenes only if crews confirm containment.”',
+          tags: ['Memo'],
+          bridge: 'Exports bilingual abstract + analytics hook.',
+        },
+        {
+          speaker: 'Analytics Agent',
+          role: 'LLM · Consensus Heatmap',
+          text: 'Consensus 82%: Mozi + Confucius aligned after embedding thresholds; Laozi insists on monitoring improvisation credits.',
+          tags: ['Insight'],
+          bridge: 'Feeds insight dashboard; loops new scenario variant to Phase 1.',
+        },
+      ],
+    };
+
+    function App() {
+      const [currentPhase, setCurrentPhase] = React.useState('introduce');
+      const [progress, setProgress] = React.useState({ introduce: 18, 'cross-response': 0, synthesis: 0 });
+      const [timeline, setTimeline] = React.useState([]);
+      const [lanes, setLanes] = React.useState({ introduce: [], 'cross-response': [], synthesis: [] });
+      const [requests, setRequests] = React.useState([]);
+      const [journal, setJournal] = React.useState([]);
+      const responseCursor = React.useRef({ introduce: 0, 'cross-response': 0, synthesis: 0 });
+
+      React.useEffect(() => {
+        const timers = scriptedMoments.map((moment, idx) =>
+          setTimeout(() => applyMoment(moment), 1200 * (idx + 1))
+        );
+        return () => timers.forEach(clearTimeout);
+      }, []);
+
+      const applyMoment = React.useCallback((moment) => {
+        setCurrentPhase(moment.phase);
+        setTimeline((prev) => [...prev, moment]);
+        setJournal((prev) => [...prev.slice(-4), { phase: moment.phase, note: moment.journal, stamp: moment.stamp }]);
+        setProgress((prev) => {
+          const next = { ...prev };
+          Object.entries(moment.progress || {}).forEach(([key, value]) => {
+            next[key] = Math.max(next[key] || 0, value);
+          });
+          if (moment.phase === 'synthesis') next.synthesis = Math.max(next.synthesis, 78);
+          return next;
+        });
+        setLanes((prev) => {
+          const next = { ...prev };
+          moment.messages.forEach((msg) => {
+            const phaseLane = [...(next[moment.phase] || [])];
+            phaseLane.push({ ...msg, momentId: moment.id, phase: moment.phase });
+            next[moment.phase] = phaseLane;
+          });
+          return next;
+        });
+      }, []);
+
+      const callMockLLM = React.useCallback((phase, prompt) => {
+        const pool = mockLLMResponses[phase] || [];
+        if (!pool.length) return Promise.resolve(null);
+        const cursor = responseCursor.current;
+        const index = cursor[phase] % pool.length;
+        cursor[phase] += 1;
+        const template = pool[index];
+        return new Promise((resolve) => {
+          setTimeout(() => {
+            resolve({
+              ...template,
+              id: `mock-${Date.now()}`,
+              phase,
+              prompt,
+              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            });
+          }, 900);
+        });
+      }, []);
+
+      const handleLLMSubmit = React.useCallback(async ({ phase, prompt, audience }) => {
+        const requestId = `req-${Date.now()}`;
+        setRequests((prev) => [
+          { id: requestId, phase, prompt, audience, status: 'pending', createdAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+          ...prev,
+        ]);
+        setProgress((prev) => {
+          const next = { ...prev };
+          next[phase] = Math.min(100, (next[phase] || 0) + 8);
+          return next;
+        });
+        const response = await callMockLLM(phase, prompt);
+        if (!response) {
+          setRequests((prev) => prev.map((req) => req.id === requestId ? { ...req, status: 'resolved', resolvedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), note: 'No mock response configured.' } : req));
+          return;
+        }
+        setLanes((prev) => {
+          const next = { ...prev };
+          const phaseLane = [...(next[phase] || [])];
+          phaseLane.push({
+            ...response,
+            role: `${response.role} · via Mock`,
+            tags: [...(response.tags || []), 'Mock LLM'],
+            bridge: response.bridge,
+            target: audience !== 'all' ? audience : undefined,
+          });
+          next[phase] = phaseLane;
+          if (phase === 'cross-response') {
+            next.synthesis = [...(next.synthesis || []), {
+              id: `${response.id}-echo`,
+              speaker: 'Integration Monitor',
+              role: 'Auto-Bridge',
+              text: `Queued synthesis clause referencing mock reply: "${response.text.slice(0, 72)}${response.text.length > 72 ? '…' : ''}"`,
+              tags: ['Auto'],
+              phase: 'synthesis',
+              bridge: 'Ensures critique inflow hits synthesis queue.',
+            }];
+          }
+          return next;
+        });
+        setRequests((prev) => prev.map((req) => req.id === requestId
+          ? { ...req, status: 'resolved', resolvedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), note: response.text }
+          : req
+        ));
+        setCurrentPhase(phase);
+        setJournal((prev) => [...prev.slice(-4), {
+          phase,
+          note: `Mock LLM injected: ${response.bridge}`,
+          stamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }]);
+      }, [callMockLLM]);
+
+      return (
+        <React.Fragment>
+          <PhaseNav phaseMeta={phaseMeta} progress={progress} currentPhase={currentPhase} />
+          <LeftPanel phaseMeta={phaseMeta} progress={progress} timeline={timeline} currentPhase={currentPhase} />
+          <CenterPanel lanes={lanes} phaseMeta={phaseMeta} currentPhase={currentPhase} />
+          <RightPanel
+            onSubmit={handleLLMSubmit}
+            requests={requests}
+            journal={journal}
+            currentPhase={currentPhase}
+          />
+        </React.Fragment>
+      );
+    }
+
+    function PhaseNav({ phaseMeta, progress, currentPhase }) {
+      React.useEffect(() => {
+        const nav = document.querySelector('[data-testid="phase-nav"]');
+        if (!nav) return;
+        nav.innerHTML = '';
+        Object.values(phaseMeta).forEach((phase) => {
+          const chip = document.createElement('div');
+          chip.className = `phase-chip ${currentPhase === phase.id ? 'active' : ''}`;
+          chip.dataset.phase = phase.id;
+          chip.innerHTML = `
+            <span class="progress">${progress[phase.id] || 0}%</span>
+            <span>${phase.label}</span>
+          `;
+          nav.appendChild(chip);
+        });
+      }, [phaseMeta, progress, currentPhase]);
+      return null;
+    }
+
+    function LeftPanel({ phaseMeta, progress, timeline, currentPhase }) {
+      return ReactDOM.createPortal(
+        <React.Fragment>
+          <header>
+            <h2>Phase Journey</h2>
+            <span className="badge">Live script</span>
+          </header>
+          <div className="journey-stack">
+            {Object.values(phaseMeta).map((phase) => (
+              <article key={phase.id} className={`journey-card ${currentPhase === phase.id ? 'active' : ''}`} data-phase-card={phase.id}>
+                <strong>{phase.label}</strong>
+                <p>{phase.focus}</p>
+                <div className="journey-tags">
+                  <span className="tag">Progress · {progress[phase.id] || 0}%</span>
+                  <span className="tag">Cadence</span>
+                </div>
+                <p>{phase.cadence}</p>
+                <div className="journey-tags">
+                  {phase.outputs.slice(0, 2).map((output) => (
+                    <span key={output} className="tag">{output}</span>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </div>
+          <div className="insight-box">
+            <h3>Timeline Highlights</h3>
+            <ul>
+              {timeline.length === 0 && <li>Awaiting kickoff — anchors will populate shortly.</li>}
+              {timeline.slice(-4).map((moment) => (
+                <li key={moment.id}>
+                  <strong>{moment.stamp}</strong> · {moment.label} — {moment.anchor}
+                </li>
+              ))}
+            </ul>
+          </div>
+        </React.Fragment>,
+        document.getElementById('left-panel')
+      );
+    }
+
+    function CenterPanel({ lanes, phaseMeta, currentPhase }) {
+      return ReactDOM.createPortal(
+        <React.Fragment>
+          <header>
+            <h2>Conversation Lanes</h2>
+            <span className="badge">Phase weave</span>
+          </header>
+          <section className="lane-grid">
+            {Object.values(phaseMeta).map((phase) => (
+              <article key={phase.id} className={`lane ${currentPhase === phase.id ? 'active' : ''}`} data-testid={`lane-${phase.id}`}>
+                <header>
+                  <h3>{phase.label}</h3>
+                  <span>{phase.focus}</span>
+                </header>
+                <div className="lane-body">
+                  {(lanes[phase.id] || []).length === 0 && (
+                    <div className="empty">Cards will appear here as events from {phase.label} arrive.</div>
+                  )}
+                  {(lanes[phase.id] || []).map((card) => (
+                    <article key={card.id} className={`card ${currentPhase === phase.id ? 'active' : ''}`} data-phase={phase.id}>
+                      <header>
+                        <span>{card.speaker}{card.target ? ` → ${card.target}` : ''}</span>
+                        <span>{card.role}</span>
+                      </header>
+                      <h4>{card.text}</h4>
+                      {card.translation && (
+                        <div className="translation">{card.translation}</div>
+                      )}
+                      {card.bridge && (
+                        <div className="bridge">{card.bridge}</div>
+                      )}
+                      {(card.tags && card.tags.length > 0) && (
+                        <div className="chip-row">
+                          {card.tags.map((tag) => (
+                            <span key={tag} className="chip">{tag}</span>
+                          ))}
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              </article>
+            ))}
+          </section>
+        </React.Fragment>,
+        document.getElementById('center-panel')
+      );
+    }
+
+    function RightPanel({ onSubmit, requests, journal, currentPhase }) {
+      const [phase, setPhase] = React.useState('cross-response');
+      const [audience, setAudience] = React.useState('all');
+      const [prompt, setPrompt] = React.useState('Flag if the levee metrics are drifting before the ritual council is in place.');
+
+      const handleSubmit = (event) => {
+        event.preventDefault();
+        if (!prompt.trim()) return;
+        onSubmit({ phase, audience, prompt });
+        setPrompt('');
+      };
+
+      return ReactDOM.createPortal(
+        <React.Fragment>
+          <header>
+            <h2>Mock LLM Console</h2>
+            <span className="badge" data-testid="mock-bridge">Local mock</span>
+          </header>
+          <form className="console-form" onSubmit={handleSubmit} data-testid="llm-console">
+            <div>
+              <label htmlFor="phase-select">Target phase</label>
+              <select id="phase-select" value={phase} onChange={(event) => setPhase(event.target.value)}>
+                <option value="introduce">Phase 1 · Introduce</option>
+                <option value="cross-response">Phase 2 · Cross-Response</option>
+                <option value="synthesis">Phase 3 · Synthesis</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="audience-select">Audience focus</label>
+              <select id="audience-select" value={audience} onChange={(event) => setAudience(event.target.value)}>
+                <option value="all">Council (all)</option>
+                <option value="Confucius">Confucius</option>
+                <option value="Mozi">Mozi</option>
+                <option value="Laozi">Laozi</option>
+              </select>
+            </div>
+            <div>
+              <label htmlFor="prompt-input">Prompt</label>
+              <textarea
+                id="prompt-input"
+                value={prompt}
+                onChange={(event) => setPrompt(event.target.value)}
+                placeholder="Ask the mocked LLM to contribute to the selected phase."
+              />
+            </div>
+            <button className="primary" type="submit" data-testid="submit-mock">Send to Mock LLM</button>
+          </form>
+
+          <section>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h2>Recent Requests</h2>
+              <span className="badge">Mock queue</span>
+            </header>
+            <div className="request-feed" data-testid="request-feed">
+              {requests.length === 0 && <div className="empty">No requests yet. Use the console to inject a mocked call.</div>}
+              {requests.map((req) => (
+                <article key={req.id} className="request-card">
+                  <header>
+                    <span>{req.createdAt}</span>
+                    <span className={`status ${req.status}`}>{req.status}</span>
+                  </header>
+                  <strong>{phaseMetaLabel(req.phase)}</strong>
+                  <p>{req.prompt}</p>
+                  {req.note && <p style={{ fontSize: '12px', color: 'var(--muted)' }}>→ {req.note}</p>}
+                </article>
+              ))}
+            </div>
+          </section>
+
+          <section className="insight-box" data-testid="insight-box">
+            <h3>Integration Journal</h3>
+            <ul>
+              {journal.length === 0 && <li>Waiting for the first scripted event.</li>}
+              {journal.map((entry, index) => (
+                <li key={`${entry.phase}-${index}`}>
+                  <strong>{entry.stamp}</strong> · {phaseMetaLabel(entry.phase)} · {entry.note}
+                </li>
+              ))}
+            </ul>
+            <p style={{ fontSize: '12px', color: 'var(--muted)' }}>Current phase focus: {phaseFocus(currentPhase)}</p>
+          </section>
+        </React.Fragment>,
+        document.getElementById('right-panel')
+      );
+    }
+
+    function phaseMetaLabel(phase) {
+      if (phase === 'introduce') return 'Phase 1 · Introduce';
+      if (phase === 'cross-response') return 'Phase 2 · Cross-Response';
+      if (phase === 'synthesis') return 'Phase 3 · Synthesis';
+      return phase;
+    }
+
+    function phaseFocus(phase) {
+      if (phase === 'introduce') return 'Publishing anchors and drilling duties.';
+      if (phase === 'cross-response') return 'Balancing critiques and routing tensions forward.';
+      if (phase === 'synthesis') return 'Drafting blended directives and reboot prompts.';
+      return 'Tracking phases.';
+    }
+
+    ReactDOM.createRoot(document.getElementById('root') || document.body.appendChild(document.createElement('div'))).render(<App />);
+  </script>
+</body>
+</html>

@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Revised Prompt Stack Order</title>
+<style>
+:root {
+    --chinese-red:#8B0000;
+    --chinese-gold:#FFD700;
+    --paper-beige:#F5F5DC;
+    --light-cream:#FFFEF0;
+    --ink-black:#1a1a1a;
+    --level-1:#8B0000;
+    --level-2:#CD5C5C;
+    --level-3:#666;
+    --level-4:#999;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:linear-gradient(135deg,var(--paper-beige)0%,var(--light-cream)100%);
+    color:var(--ink-black);
+    margin:0;
+    padding:0;
+    width:100vw;
+    max-width:100%;
+    line-height:1.2;
+    font-size:14px;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',Roboto,Arial,sans-serif;
+}
+.container{width:100%;padding:0;margin:0;}
+h1{
+    font-size:24px;font-weight:900;margin:4px 0;padding:6px 4px;
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:-0.5px;
+}
+h2{
+    font-size:18px;font-weight:700;margin:8px 0 4px 0;padding:4px;
+    border-left:4px solid var(--chinese-red);
+    background:rgba(139,0,0,0.03);
+    color:var(--level-1);
+}
+h3{
+    font-size:14px;font-weight:600;margin:4px 0 2px 8px;color:var(--level-2);
+    text-transform:uppercase;letter-spacing:0.5px;
+}
+h4{
+    font-size:12px;font-weight:500;margin:2px 0 1px 16px;color:var(--level-3);
+}
+button{
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    color:#fff;border:1px solid rgba(255,215,0,0.3);
+    transition:all .2s ease;padding:4px 10px;margin:2px;font-size:12px;
+    border-radius:2px;cursor:pointer;font-weight:600;
+}
+button:hover{transform:translateY(-1px);box-shadow:0 1px 4px rgba(139,0,0,0.3);}
+.two-column-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:4px;}
+.full-width{grid-column:1 / -1;}
+.collapsible{border:1px solid rgba(139,0,0,0.12);background:white;}
+.collapsible-header{cursor:pointer;padding:6px 10px;background:linear-gradient(135deg,rgba(139,0,0,0.08),rgba(255,215,0,0.05));border-left:3px solid var(--chinese-gold);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;color:var(--level-2);}
+.collapsible-header .arrow{transition:transform 0.3s ease;font-size:11px;color:var(--chinese-red);}
+.collapsible.open .collapsible-header .arrow{transform:rotate(90deg);}
+.collapsible-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 10px;}
+.collapsible.open .collapsible-content{max-height:2200px;padding:6px 10px 8px 10px;}
+.dense-list{list-style:none;padding:0;margin:0;}
+.dense-list li{padding:2px 0 2px 14px;border-left:2px solid transparent;position:relative;line-height:1.2;}
+.dense-list li:before{content:"▸";position:absolute;left:0;font-size:10px;color:var(--chinese-red);}
+.dense-list li strong{color:var(--level-2);font-weight:600;}
+pre{font-family:'SF Mono','Menlo','Consolas',monospace;background:rgba(0,0,0,0.05);padding:6px;border-radius:3px;font-size:11px;line-height:1.3;white-space:pre-wrap;word-break:break-word;}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Confucian Café · Simplified Prompt Flow</h1>
+<div style="text-align:right;margin:4px 4px 0 0;">
+<button id="expand-all">Expand All</button>
+<button id="collapse-all">Collapse All</button>
+</div>
+</header>
+<section class="important-always-visible">
+<h2>🎯 Key Changes Requested</h2>
+<div class="two-column-layout">
+<ul class="dense-list">
+<li><strong>SystemPrompt first:</strong> Start with situation + general guidance, then persona.citeclaude_html/confucian_philosophers_a2a_architecture.html:983claude_html/confucian_philosophers_a2a_architecture.html:1171</li>
+<li><strong>Safety embedded:</strong> Safety rules move into the directive block so they travel with tactical instructions.</li>
+<li><strong>Recipient routing:</strong> Directive now stamps a <code>&lt;Recipient&gt;</code> node so agents know who should receive the response.</li>
+</ul>
+<ul class="dense-list">
+<li><strong>Order:</strong> SystemPrompt → Directive (with safety) → Context → OutputContract.</li>
+<li><strong>Audience reminder:</strong> Router still stamps `audience` from UI selection.citeclaude_html/confucian_cafe_ui_react_demo.html:731</li>
+</ul>
+</div>
+</section>
+<main class="two-column-layout">
+<div class="collapsible" data-collapsible="open">
+<div class="collapsible-header"><span>🧩 Revised XML Skeleton</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<pre>&lt;Prompt&gt;
+  &lt;SystemPrompt&gt;
+    &lt;Situation source="moderator" topic="{topic}" phase="{phase}"&gt;
+      &lt;![CDATA[{situation_brief}]]&gt;
+    &lt;/Situation&gt;
+
+    &lt;GeneralGuidance tone="{tone_guidance}" cadence="{cadence}" audience="{audience}"&gt;
+      &lt;![CDATA[{general_guidance_text}]]&gt;
+    &lt;/GeneralGuidance&gt;
+
+    &lt;SystemPersona source="agent-card" philosopher="{philosopher_id}" version="{card.version}"&gt;
+      &lt;![CDATA[{persona_core_doctrine}]]&gt;
+    &lt;/SystemPersona&gt;
+  &lt;/SystemPrompt&gt;
+
+  &lt;Directive type="{round_type}" source="moderator" audience="{audience}"&gt;
+    &lt;Instruction&gt;{round_instruction}&lt;/Instruction&gt;
+    &lt;SafetyRules&gt;
+      &lt;Rule&gt;Never surface private reasoning in the public answer.&lt;/Rule&gt;
+      &lt;Rule&gt;Cite traditions accurately; acknowledge uncertainty when evidence is thin.&lt;/Rule&gt;
+    &lt;/SafetyRules&gt;
+    &lt;Constraints maxWords="{surface_cap}" requireTranslations="{translation_prefs}" /&gt;
+  &lt;/Directive&gt;
+
+  &lt;Context conversationId="{conversation_id}" round="{round_index}" showInsights="{show_insights}"&gt;
+    &lt;UserPrompt routedTo="{audience}" timestamp="{timestamp}"&gt;
+      &lt;![CDATA[{user_prompt}]]&gt;
+    &lt;/UserPrompt&gt;
+    &lt;PeerStatements&gt;
+      {#for context in prior_statements}
+      &lt;Statement speaker="{context.speaker}" phase="{context.phase}"&gt;
+        &lt;![CDATA[{context.surface}]]&gt;
+      &lt;/Statement&gt;
+      {#/for}
+    &lt;/PeerStatements&gt;
+  &lt;/Context&gt;
+
+  &lt;OutputContract schema="confucian_cafe.v1" source="ui"&gt;
+&lt;![CDATA[
+Return JSON object with keys:
+  surface: string   // English public layer
+  translations: { modern?: string, classical?: string }
+  insight: string   // private reasoning for moderator only
+  citations: string[] (optional)
+  deliverTo: "all" | "moderator" | philosopher_id
+Ensure surface ≠ insight in wording and respect deliverTo.
+]]&gt;
+  &lt;/OutputContract&gt;
+&lt;/Prompt&gt;</pre>
+<p>Inference: the earlier persona + agent-card guidance ensures tone, while embedding safety inside the directive keeps turn-specific instructions self-contained.citeclaude_html/confucian_philosophers_a2a_architecture.html:983claude_html/confucian_philosophers_a2a_architecture.html:1171claude_html/confucian_cafe_ui_react_mockup.html:561</p>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>📋 Segment Origins</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Situation/Guidance:</strong> Router synthesizes topic + phase context for clarity.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171claude_html/confucian_philosophers_a2a_architecture.html:1230</li>
+<li><strong>SystemPersona:</strong> Direct pull from each agent’s card and prompt file.citeclaude_html/confucian_philosophers_a2a_architecture.html:552claude_html/confucian_philosophers_a2a_architecture.html:983</li>
+<li><strong>Directive/Safety:</strong> Dialogue manager logic per round plus embedded policy guardrails.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171claude_html/confucian_philosophers_a2a_architecture.html:1194</li>
+<li><strong>Context:</strong> User prompt + `metadata.context` fed through to keep critique history.citeclaude_html/confucian_philosophers_a2a_architecture.html:1176</li>
+<li><strong>OutputContract:</strong> Mirrors UI event schema for surface/translation/insight split and enforces <code>deliverTo</code> in JSON.citeclaude_html/confucian_cafe_ui_react_demo.html:677claude_html/confucian_cafe_ui_react_mockup.html:561</li>
+</ul>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🧪 Checklist</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Template render:</strong> Confirm SystemPrompt block always includes Situation + Guidance before persona.</li>
+<li><strong>Safety audit:</strong> Verify every Directive includes the shared safety rules when emitted.</li>
+<li><strong>Context sanity:</strong> Ensure CDATA injection preserves any markup in user queries.</li>
+</ul>
+</div>
+</div>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('[data-collapsible]').forEach(function(section){
+        const isOpen=section.getAttribute('data-collapsible')==='open';
+        section.classList.add('collapsible');
+        if(isOpen) section.classList.add('open');
+    });
+    document.querySelectorAll('.collapsible-header').forEach(function(header){
+        header.addEventListener('click',function(){
+            const collapsible=this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+    const expandAllBtn=document.getElementById('expand-all');
+    const collapseAllBtn=document.getElementById('collapse-all');
+    if(expandAllBtn){
+        expandAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.add('open');});
+        });
+    }
+    if(collapseAllBtn){
+        collapseAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.remove('open');});
+        });
+    }
+});
+</script>
+</body>
+</html>

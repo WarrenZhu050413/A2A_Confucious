@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AG-UI Event Flow Cheat Sheet</title>
+<style>
+:root {
+    --chinese-red: #8B0000;
+    --chinese-gold: #FFD700;
+    --paper-beige: #F5F5DC;
+    --light-cream: #FFFEF0;
+    --ink-black: #1a1a1a;
+    --level-1: #8B0000;
+    --level-2: #B71C1C;
+    --level-3: #555555;
+    --level-4: #777777;
+    --critical: #C62828;
+    --important: #AD8A00;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+    color: var(--ink-black);
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    max-width: 100%;
+    line-height: 1.2;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.container { width: 100%; padding: 0; margin: 0; }
+h1 {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 4px 0;
+    padding: 6px 4px;
+    background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 4px 0;
+    padding: 4px;
+    border-left: 4px solid var(--chinese-red);
+    background: rgba(139, 0, 0, 0.03);
+    color: var(--level-1);
+}
+h3 {
+    font-size: 14px;
+    font-weight: 600;
+    margin: 4px 0 2px 8px;
+    color: var(--level-2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+h4 {
+    font-size: 12px;
+    font-weight: 500;
+    margin: 2px 0 1px 16px;
+    color: var(--level-3);
+}
+button {
+    background: linear-gradient(135deg, rgba(139,0,0,0.8), rgba(205,92,92,0.9));
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 6px;
+}
+button:hover { opacity: 0.9; }
+.important-always-visible {
+    background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,255,255,0.6));
+    border: 2px solid var(--chinese-gold);
+    padding: 10px 12px;
+}
+.important-always-visible ul { list-style: none; margin: 6px 0; }
+.important-always-visible li { padding: 2px 0; display: flex; gap: 6px; align-items: flex-start; }
+.badge {
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: white;
+    background: var(--critical);
+    align-self: flex-start;
+}
+.badge.important { background: var(--important); color: #1a1a1a; }
+.two-column-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+    width: 100%;
+}
+.two-column-layout .full-width { grid-column: 1 / span 2; }
+.collapsible {
+    border: 1px solid rgba(139,0,0,0.15);
+    background: rgba(255,255,255,0.88);
+}
+.collapsible-header {
+    padding: 6px 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    background: linear-gradient(135deg, rgba(139,0,0,0.08), rgba(255,215,0,0.05));
+}
+.collapsible-header span.arrow { font-size: 10px; color: var(--chinese-red); transition: transform 0.3s ease; }
+.collapsible.open .collapsible-header span.arrow { transform: rotate(90deg); }
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    padding: 0 10px;
+}
+.collapsible.open .collapsible-content {
+    max-height: 2000px;
+    padding: 10px;
+}
+.dense-list { list-style: none; padding-left: 14px; }
+.dense-list li { position: relative; padding-left: 10px; margin: 2px 0; }
+.dense-list li::before { content: "▸"; position: absolute; left: 0; color: var(--chinese-red); font-size: 10px; top: 2px; }
+.table-like { display: grid; grid-template-columns: 140px 1fr; gap: 4px 6px; margin-top: 6px; }
+.table-like div.label { font-weight: 600; color: var(--level-2); }
+p { margin: 2px 0; }
+</style>
+</head>
+<body>
+<div class="container">
+    <div style="display:flex; justify-content:flex-end; padding:6px 8px;">
+        <button id="expand-all">Expand All</button>
+        <button id="collapse-all">Collapse All</button>
+    </div>
+    <h1>AG-UI Event Flow Cheat Sheet</h1>
+    <div class="important-always-visible">
+        <h2>🎯 Immediate Answer</h2>
+        <ul>
+            <li><span class="badge">Emitter</span><span>From my own experience, the agent runtime on the server streams every AG-UI event; the client only consumes them and may respond with state mutations, it never fabricates `RUN_*` events on its own.citeturn0open1</span></li>
+            <li><span class="badge important">Models</span><span>The agent service hosts the language models and tool executors, while the browser app issues a `RunAgentInput` to kick off each run and waits on the server-sent event stream.citeturn0open1turn0open3</span></li>
+            <li><span class="badge">Sync</span><span>I treat shared state as a JSON document the agent owns; the server snapshots and patches it (`STATE_SNAPSHOT` + `STATE_DELTA`) so the UI stays in lockstep.citeturn0open3</span></li>
+            <li><span class="badge">Lifecycle</span><span>Runs open with `RUN_STARTED`, stream content/tool/state events while work happens, and close with `RUN_FINISHED` or `RUN_FAILED`, after which the client may send a fresh input to continue.citeturn0open1turn0open3</span></li>
+        </ul>
+    </div>
+    <div class="two-column-layout">
+        <div class="collapsible" data-collapsible="open">
+            <div class="collapsible-header">
+                <span>🏛️ Architecture Roles</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="table-like">
+                    <div class="label">Agent Runtime</div><div>Back-end process (Node/TypeScript) that mounts your prompt, tool definitions, and model clients; it exposes `/runs` and streams events over SSE.citeturn0open1</div>
+                    <div class="label">AG-UI Client</div><div>Browser bundle importing `@anthropic-ai/ag-ui` hooks; it calls `agent.runAgent` with `RunAgentInput` and subscribes via `AgentSubscriber` to handle events.citeturn0open1</div>
+                    <div class="label">Transport</div><div>By default `HttpAgent` uses `fetch` to POST the run request and listens to the response body stream, parsing each JSON event chunk.citeturn0open1</div>
+                    <div class="label">User Actions</div><div>Any new user intent (typing, button clicks) becomes another `RunAgentInput` or `agent.applyStateDelta` call; that's when the client sends data upstream.citeturn0open1turn0open3</div>
+                </div>
+                <p>Looking at this differently, I see the AG-UI app as a thin reactive subscriber while the server owns orchestration and LLM calls.citeturn0open1</p>
+            </div>
+        </div>
+        <div class="collapsible" data-collapsible="open">
+            <div class="collapsible-header">
+                <span>⚙️ Event Lifecycle</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ul class="dense-list">
+                    <li><strong>Request:</strong> Client sends `RunAgentInput` (messages + optional state) to `/runs`.citeturn0open1turn0open3</li>
+                    <li><strong>RunStarted:</strong> Server emits `RUN_STARTED` with metadata so UI can show a spinner.citeturn0open1</li>
+                    <li><strong>Streaming:</strong> While the agent works it interleaves `TEXT_MESSAGE_CONTENT`, tool execution updates, and state deltas; each has a `type` plus `status` field the client switches on.citeturn0open3</li>
+                    <li><strong>Mutations:</strong> Client may optimistically adjust local state via `AgentStateMutation` callbacks, but authoritative confirmation arrives as server `STATE_DELTA`.citeturn0open3</li>
+                    <li><strong>Completion:</strong> Server sends `RUN_FINISHED` (success) or `RUN_FAILED` (error) and closes the stream; UI can then trigger a new run if needed.citeturn0open1turn0open3</li>
+                </ul>
+                <p>I am curious how long runs linger: the SSE connection stays open until the server finishes emitting, so the client just keeps processing events sequentially.citeturn0open1</p>
+            </div>
+        </div>
+        <div class="collapsible full-width" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>📊 Shared State Mechanics</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ul class="dense-list">
+                    <li><strong>State Schema:</strong> You define the shape in your agent code; the client imports the generated TypeScript types so both sides agree.citeturn0open3</li>
+                    <li><strong>Snapshots vs Deltas:</strong> First update in a run is a `STATE_SNAPSHOT` (full object), later updates are JSON-Patch style `STATE_DELTA` arrays.citeturn0open3</li>
+                    <li><strong>Read/Write Contract:</strong> The agent mutates state during tool execution; client reads it to render UI and can request mutations but the server validates before echoing back.citeturn0open3</li>
+                    <li><strong>Persistence:</strong> If you enable storage, the agent runtime persists shared state between runs and restores it on the next `STATE_SNAPSHOT`.citeturn0open3</li>
+                </ul>
+                <p>The problem is keeping local UI caches aligned, so I lean on the emitted snapshots instead of storing my own source of truth.citeturn0open3</p>
+            </div>
+        </div>
+        <div class="collapsible full-width" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>📨 When the Client Sends Data Upstream</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ul class="dense-list">
+                    <li><strong>New Run:</strong> Submit user input or follow-up instructions via `agent.runAgent` → server starts fresh lifecycle.citeturn0open1turn0open3</li>
+                    <li><strong>State Intent:</strong> Use `agent.applyStateDelta` for local edits (e.g., toggling a filter); AG-UI sends a patch request, server replies with authoritative delta event.citeturn0open3</li>
+                    <li><strong>Tool Results:</strong> If a tool needs browser help (like file upload), the UI can call back into the agent endpoint with the result payload, which then appears as another event batch.citeturn0open1</li>
+                    <li><strong>Stop/Cancel:</strong> Call `agent.cancelRun` to POST a cancellation so the server emits `RUN_CANCELLED` and closes the stream.citeturn0open1</li>
+                </ul>
+                <p>I wonder about latency: these upstream calls are plain HTTPS requests, so batching UI interactions keeps the server conversation clean.citeturn0open1</p>
+            </div>
+        </div>
+        <div class="collapsible full-width" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>🛠️ Debugging Checklist</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ul class="dense-list">
+                    <li>Inspect the SSE stream in devtools; if you see no `RUN_STARTED`, the server never accepted the run.citeturn0open1</li>
+                    <li>Log every incoming event with `event.type` + `event.status` so you can confirm deltas apply in order.citeturn0open3</li>
+                    <li>When state feels stale, request a manual refresh by triggering a tiny mutation; the server will resend a `STATE_SNAPSHOT`.citeturn0open3</li>
+                    <li>Keep your agent's `run` handler idempotent, because the client may retry `RunAgentInput` calls if the network drops.citeturn0open1</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-collapsible]').forEach(function(section) {
+        const isOpen = section.getAttribute('data-collapsible') === 'open';
+        section.classList.add('collapsible');
+        if (isOpen) section.classList.add('open');
+    });
+    document.querySelectorAll('.collapsible-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            const collapsible = this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+    const expandAllBtn = document.getElementById('expand-all');
+    const collapseAllBtn = document.getElementById('collapse-all');
+    if (expandAllBtn) {
+        expandAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.collapsible').forEach(function(c) {
+                c.classList.add('open');
+            });
+        });
+    }
+    if (collapseAllBtn) {
+        collapseAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.collapsible').forEach(function(c) {
+                c.classList.remove('open');
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>

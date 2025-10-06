@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confucian Café · Minimal UI Mockup</title>
+    <style>
+        :root {
+            --chinese-red: #8B0000;
+            --chinese-gold: #FFD700;
+            --paper-beige: #F5F5DC;
+            --light-cream: #FFFEF0;
+            --ink-black: #1a1a1a;
+            --level-1: #8B0000;
+            --level-2: #B71C1C;
+            --level-3: #555555;
+            --level-4: #777777;
+            --jade: #00A86B;
+            --slate: #2F4F4F;
+            --soft-white: rgba(255, 255, 255, 0.94);
+            --neutral-border: rgba(139, 0, 0, 0.12);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+            color: var(--ink-black);
+            margin: 0;
+            padding: 0 0 40px 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, Arial, sans-serif;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+
+        .container {
+            width: min(1200px, 96vw);
+            margin: 24px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        h1 {
+            font-size: 32px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            text-align: center;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--level-1);
+            border-left: 4px solid var(--chinese-red);
+            padding-left: 10px;
+            margin: 16px 0 8px 0;
+            background: rgba(139, 0, 0, 0.05);
+        }
+
+        h3 {
+            font-size: 15px;
+            font-weight: 600;
+            color: var(--level-2);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-bottom: 6px;
+        }
+
+        p, li, span { color: var(--level-3); }
+
+        .important {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.18), rgba(255, 255, 255, 0.9));
+            border: 2px solid var(--chinese-gold);
+            border-radius: 6px;
+            padding: 16px;
+            display: grid;
+            gap: 8px;
+        }
+
+        .important ul { list-style: none; display: grid; gap: 6px; }
+
+        .mockup-grid {
+            display: grid;
+            grid-template-columns: 280px 1fr 260px;
+            gap: 16px;
+        }
+
+        .panel {
+            background: var(--soft-white);
+            border: 1px solid var(--neutral-border);
+            border-radius: 6px;
+            padding: 14px;
+            box-shadow: 0 4px 20px rgba(26, 26, 26, 0.08);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            border: 1px solid rgba(139, 0, 0, 0.18);
+            background: rgba(139, 0, 0, 0.07);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--level-2);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .pill.active {
+            border: 1px solid var(--chinese-red);
+            background: rgba(139, 0, 0, 0.18);
+            color: var(--level-1);
+        }
+
+        .pill.toggleable { background: rgba(0, 0, 0, 0.05); border-color: rgba(0, 0, 0, 0.08); color: var(--level-3); }
+        .pill.toggleable.active { border-color: var(--jade); background: rgba(0, 168, 107, 0.16); color: var(--jade); }
+        .pill.green { border-color: var(--jade); color: var(--jade); background: rgba(0, 168, 107, 0.12); }
+
+        .roster-toggle {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .philosopher-card {
+            border: 1px solid var(--neutral-border);
+            border-radius: 6px;
+            padding: 10px;
+            display: grid;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.86);
+        }
+
+        .philosopher-card header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 700;
+            color: var(--slate);
+        }
+
+        .skill-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .skill-list span {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(0, 0, 0, 0.06);
+            color: var(--level-3);
+        }
+
+        .dialogue-window {
+            display: grid;
+            grid-template-rows: auto auto 1fr auto;
+            gap: 12px;
+        }
+
+        .dialogue-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            background: rgba(139, 0, 0, 0.08);
+            border-radius: 6px;
+        }
+
+        .language-toggle {
+            display: flex;
+            gap: 8px;
+        }
+
+        .message-list {
+            display: grid;
+            gap: 12px;
+            max-height: 340px;
+            overflow-y: hidden;
+        }
+
+        .message {
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid rgba(139, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.86);
+            display: grid;
+            gap: 6px;
+        }
+
+        .message .meta { display: flex; justify-content: space-between; align-items: center; }
+        .message .meta span { font-size: 12px; color: var(--level-4); }
+
+        .message .controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .ghost-button {
+            padding: 4px 10px;
+            border-radius: 999px;
+            border: 1px dashed rgba(139, 0, 0, 0.28);
+            background: rgba(139, 0, 0, 0.06);
+            font-size: 12px;
+            color: var(--level-2);
+            cursor: pointer;
+        }
+
+        .ghost-button.secondary {
+            border-color: rgba(0, 0, 0, 0.2);
+            background: rgba(0, 0, 0, 0.05);
+            color: var(--level-3);
+        }
+
+        details.translation {
+            background: rgba(139, 0, 0, 0.03);
+            border: 1px dashed rgba(139, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 8px 10px;
+        }
+
+        details.translation summary {
+            list-style: none;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--level-2);
+        }
+
+        details.translation[open] summary { color: var(--level-1); }
+
+        details.translation p {
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--level-3);
+        }
+
+        .timeline {
+            display: grid;
+            gap: 8px;
+        }
+
+        .timeline-step {
+            border-left: 3px solid var(--chinese-red);
+            padding: 10px 12px;
+            background: rgba(139, 0, 0, 0.04);
+            border-radius: 4px;
+        }
+
+        .user-input {
+            border: 1px solid var(--neutral-border);
+            border-radius: 6px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.9);
+            display: grid;
+            gap: 8px;
+        }
+
+        .user-input textarea {
+            min-height: 70px;
+            border: 1px solid rgba(139, 0, 0, 0.2);
+            border-radius: 6px;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+        }
+
+        .user-input .actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.85), rgba(205, 92, 92, 0.9));
+            color: white;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 999px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .config-panel {
+            display: grid;
+            gap: 12px;
+        }
+
+        .config-card {
+            border: 1px solid var(--neutral-border);
+            border-radius: 6px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.88);
+            display: grid;
+            gap: 6px;
+        }
+
+        .config-card code {
+            font-family: 'SF Mono', 'Roboto Mono', Menlo, Courier, monospace;
+            font-size: 12px;
+            background: rgba(0, 0, 0, 0.05);
+            padding: 4px 6px;
+            border-radius: 4px;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 18px;
+            background: rgba(139, 0, 0, 0.06);
+            border-radius: 6px;
+            color: var(--level-2);
+            font-weight: 600;
+        }
+
+        @media (max-width: 1080px) {
+            .mockup-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Confucian Café · Minimal UI Mockup</h1>
+
+        <div class="important">
+            <h2>Key Objectives</h2>
+            <ul>
+                <li><strong>English First Surface:</strong> dialogue loads in English; users tap to request Chinese layers per sentence.</li>
+                <li><strong>Philosopher Toggle:</strong> roster pills enable/disable thinkers instantly; configs auto-update the loop.</li>
+                <li><strong>Optional Insights:</strong> internal reasoning stays hidden until the switch is flipped.</li>
+                <li><strong>Phase Awareness:</strong> live timeline shows which structured step is running.</li>
+                <li><strong>User Participation:</strong> prompt composer anchors the flow for human questions or directives.</li>
+            </ul>
+        </div>
+
+        <div class="mockup-grid">
+            <aside class="panel">
+                <h3>Philosopher Lineup</h3>
+                <div class="pill active">Session: Autumn Seminar 2025</div>
+
+                <div class="config-card">
+                    <strong>Available Philosophers (Tap to include)</strong>
+                    <div class="roster-toggle">
+                        <span class="pill toggleable active">Confucius</span>
+                        <span class="pill toggleable active">Laozi</span>
+                        <span class="pill toggleable active">Mozi</span>
+                        <span class="pill toggleable">Mencius</span>
+                        <span class="pill toggleable">Xunzi</span>
+                        <span class="pill toggleable">Zhuangzi</span>
+                    </div>
+                    <p>Blue glow indicates active philosophers streaming into the dialogue.</p>
+                </div>
+
+                <section class="philosopher-card">
+                    <header>
+                        <span>Confucius</span>
+                        <span class="pill">儒家 · port 8001</span>
+                    </header>
+                    <p>Focus: <em>ren</em> 仁, <em>li</em> 礼, role-based harmony.</p>
+                    <div class="skill-list">
+                        <span>share_position</span>
+                        <span>critique</span>
+                        <span>find_synthesis</span>
+                    </div>
+                    <div class="pill green">Insights enabled</div>
+                </section>
+
+                <section class="philosopher-card">
+                    <header>
+                        <span>Laozi</span>
+                        <span class="pill">道家 · port 8002</span>
+                    </header>
+                    <p>Emphasizes naturalness, <em>wuwei</em> 无为, soft governance.</p>
+                    <div class="skill-list">
+                        <span>share_position</span>
+                        <span>reframe</span>
+                    </div>
+                </section>
+
+                <section class="philosopher-card">
+                    <header>
+                        <span>Mozi</span>
+                        <span class="pill">墨家 · port 8003</span>
+                    </header>
+                    <p>Utility-first, universal care, pragmatic checks on ritual.</p>
+                    <div class="skill-list">
+                        <span>share_position</span>
+                        <span>audit_policy</span>
+                    </div>
+                </section>
+            </aside>
+
+            <main class="panel">
+                <div class="dialogue-window">
+                    <div class="dialogue-header">
+                        <div>
+                            <h3>Dialogue Stream</h3>
+                            <span class="pill">Topic: Water Control Ethics 2025-10-05</span>
+                        </div>
+                        <div class="language-toggle">
+                            <span class="pill active">EN</span>
+                            <span class="pill toggleable" data-layer="modern">现 · Modern 中文</span>
+                            <span class="pill toggleable" data-layer="classical">古 · Classical 文言</span>
+                        </div>
+                    </div>
+
+                    <div class="message-list">
+                        <article class="message">
+                            <div class="meta">
+                                <span>Confucius · Phase 1 · 09:00</span>
+                                <span class="pill">EN surface</span>
+                            </div>
+                            <p>“A stable river requires ritual order: align community duties so each hamlet knows its flood watch.”</p>
+                            <div class="controls">
+                                <button class="ghost-button" aria-label="fetch modern Chinese">Show Modern Chinese</button>
+                                <button class="ghost-button secondary" aria-label="fetch classical Chinese">Show Classical</button>
+                                <button class="ghost-button secondary" aria-label="hide translations" disabled>Hide Layers</button>
+                            </div>
+                            <details class="translation">
+                                <summary>现 · Modern Chinese (loaded on demand)</summary>
+                                <p>河水要稳，需礼制齐备，让乡里各司其职守望。</p>
+                            </details>
+                            <details class="translation">
+                                <summary>古 · Classical Chinese (loaded on demand)</summary>
+                                <p>河患欲平，必礼序具备，使乡社各司水禁。</p>
+                            </details>
+                            <details class="translation">
+                                <summary class="pill toggleable active">Internal thoughts</summary>
+                                <p>Consider linking <li 礼 lǐ> to practical duty. Anticipate Mozi’s utility critique.</p>
+                            </details>
+                        </article>
+
+                        <article class="message">
+                            <div class="meta">
+                                <span>Laozi · Phase 1 · 09:02</span>
+                                <span class="pill">EN surface</span>
+                            </div>
+                            <p>“Let the water wander within soft banks; govern like tending bamboo—guide growth, do not hammer it straight.”</p>
+                            <div class="controls">
+                                <button class="ghost-button">Show Modern Chinese</button>
+                                <button class="ghost-button secondary">Show Classical</button>
+                            </div>
+                            <details class="translation">
+                                <summary>现 · Modern Chinese</summary>
+                                <p>让水在柔软的堤岸中自流，治水如养竹，引导而不强折。</p>
+                            </details>
+                        </article>
+
+                        <article class="message">
+                            <div class="meta">
+                                <span>Mozi · Phase 1 · 09:04</span>
+                                <span class="pill">EN surface</span>
+                            </div>
+                            <p>“Count the benefit: evacuate first, reinforce levees second, record lessons for every province.”</p>
+                            <div class="controls">
+                                <button class="ghost-button">Show Modern Chinese</button>
+                                <button class="ghost-button secondary">Show Classical</button>
+                            </div>
+                        </article>
+                    </div>
+
+                    <section class="timeline">
+                        <div class="timeline-step">
+                            <strong>Phase 1 · Introduce Positions</strong>
+                            <p>Moderator broadcasts scenario; selected philosophers respond in English. Users request other languages per turn.</p>
+                        </div>
+                        <div class="timeline-step">
+                            <strong>Phase 2 · Cross-Response</strong>
+                            <p>Configured pairs critique prior claims; insights can be surfaced mid-stream.</p>
+                        </div>
+                        <div class="timeline-step">
+                            <strong>Phase 3 · Synthesis</strong>
+                            <p>Moderator prompts for common ground; human prompts can interject via the composer below.</p>
+                        </div>
+                    </section>
+
+                    <section class="user-input">
+                        <label for="userPrompt"><strong>User Prompt Composer</strong></label>
+                        <textarea id="userPrompt" placeholder="Pose a follow-up question, inject a scenario, or request synthesis…"></textarea>
+                        <div class="actions">
+                            <span class="pill toggleable active">Address entire council</span>
+                            <span class="pill toggleable">Direct to Confucius</span>
+                            <span class="pill toggleable">Direct to Laozi</span>
+                            <span class="pill toggleable">Direct to Mozi</span>
+                            <button class="primary-button">Send Prompt</button>
+                        </div>
+                    </section>
+                </div>
+            </main>
+
+            <aside class="panel">
+                <h3>Session Controls</h3>
+                <section class="config-panel">
+                    <div class="config-card">
+                        <strong>Configurator Drawer</strong>
+                        <p>Quick-add philosophers via dropdown or JSON paste.</p>
+                        <code>{ "name": "Xunzi", "showThoughts": false }</code>
+                        <div class="skill-list">
+                            <span>Add</span>
+                            <span>Reorder</span>
+                            <span>Preview persona</span>
+                        </div>
+                    </div>
+
+                    <div class="config-card">
+                        <strong>Language Defaults</strong>
+                        <p>Session starts with English locked. Chips control which layers auto-load when new turns arrive.</p>
+                        <div class="pill toggleable active">EN auto</div>
+                        <div class="pill toggleable">Modern auto</div>
+                        <div class="pill toggleable">Classical auto</div>
+                    </div>
+
+                    <div class="config-card">
+                        <strong>Insights Switch</strong>
+                        <p>Global switch controls internal reasoning visibility. Per-philosopher override lives in lineup cards.</p>
+                        <label class="pill toggleable active">Show internal reasoning</label>
+                        <label class="pill toggleable">Hide reasoning</label>
+                    </div>
+
+                    <div class="config-card">
+                        <strong>Event Feed</strong>
+                        <p>Compact log of moderator actions & SSE payloads.</p>
+                        <pre>[09:05] phase.change → cross-response
+[09:06] toggle.language → modern
+[09:07] roster.toggle → disable Mencius
+[09:08] user.prompt → "Budget impact?"</pre>
+                    </div>
+                </section>
+            </aside>
+        </div>
+
+        <footer class="footer">
+            Swap philosophers on the fly, keep English as the landing layer, pull deeper language or internal insight only when you choose, and steer the dialogue with your own prompts.
+        </footer>
+    </div>
+</body>
+</html>

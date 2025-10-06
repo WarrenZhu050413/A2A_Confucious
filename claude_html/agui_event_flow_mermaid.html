@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>AG-UI Event Lifecycle Diagram</title>
+<style>
+:root {
+    --chinese-red: #8B0000;
+    --chinese-gold: #FFD700;
+    --paper-beige: #F5F5DC;
+    --light-cream: #FFFEF0;
+    --ink-black: #1a1a1a;
+    --level-1: #8B0000;
+    --level-2: #B71C1C;
+    --level-3: #555555;
+    --level-4: #777777;
+    --critical: #C62828;
+    --important: #AD8A00;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+    color: var(--ink-black);
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    max-width: 100%;
+    line-height: 1.2;
+    font-size: 14px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+}
+.container { width: 100%; padding: 0; margin: 0; }
+h1 {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 4px 0;
+    padding: 6px 4px;
+    background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 8px 0 4px 0;
+    padding: 4px;
+    border-left: 4px solid var(--chinese-red);
+    background: rgba(139, 0, 0, 0.03);
+    color: var(--level-1);
+}
+button {
+    background: linear-gradient(135deg, rgba(139,0,0,0.8), rgba(205,92,92,0.9));
+    border: none;
+    color: white;
+    padding: 4px 10px;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    margin-left: 6px;
+}
+button:hover { opacity: 0.9; }
+.important-always-visible {
+    background: linear-gradient(135deg, rgba(255,215,0,0.18), rgba(255,255,255,0.6));
+    border: 2px solid var(--chinese-gold);
+    padding: 10px 12px;
+}
+.important-always-visible ul { list-style: none; margin: 6px 0; }
+.important-always-visible li { padding: 2px 0; display: flex; gap: 6px; align-items: flex-start; }
+.badge {
+    font-weight: 700;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: white;
+    background: var(--critical);
+    align-self: flex-start;
+}
+.badge.important { background: var(--important); color: #1a1a1a; }
+.mermaid-wrapper {
+    margin: 8px;
+    padding: 8px;
+    border: 1px solid rgba(139,0,0,0.2);
+    background: rgba(255,255,255,0.92);
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+<script>mermaid.initialize({ startOnLoad: true, theme: "neutral" });</script>
+</head>
+<body>
+<div class="container">
+    <div style="display:flex; justify-content:flex-end; padding:6px 8px;">
+        <button id="expand-all" disabled>Expand All</button>
+        <button id="collapse-all" disabled>Collapse All</button>
+    </div>
+    <h1>AG-UI Event Lifecycle Diagram</h1>
+    <div class="important-always-visible">
+        <h2>🎯 Immediate Answer</h2>
+        <ul>
+            <li><span class="badge">Flow</span><span>From my own experience, the client starts a run, the server streams AG-UI events, the hosted model drives generation, and shared state persists across both sides.</span></li>
+            <li><span class="badge important">Use</span><span>Keep this diagram handy when you need to check which part emits which event during an agent conversation.</span></li>
+        </ul>
+    </div>
+    <div class="mermaid-wrapper">
+        <div class="mermaid">
+sequenceDiagram
+    participant C as Client (AG-UI React App)
+    participant S as Agent Server Runtime
+    participant L as Hosted LLM / Tools
+    participant R as Shared State Store
+
+    C->>S: RunAgentInput (user message + local state)
+    S-->>C: RUN_STARTED event
+    S->>L: Invoke model/tool chain
+    L-->>S: Token stream / tool results
+    S-->>C: TEXT_MESSAGE_CONTENT events (streamed)
+    S-->>C: STATE_SNAPSHOT (initial shared state)
+    S->>R: Persist shared state snapshot
+    loop While agent work continues
+        S-->>C: STATE_DELTA (authoritative patch)
+        C->>S: Optional applyStateDelta intent
+        S->>R: Merge patch into canonical state
+        S-->>C: TOOL_RESULT / PROGRESS events
+    end
+    alt Success
+        S-->>C: RUN_FINISHED
+    else Failure or cancel
+        S-->>C: RUN_FAILED or RUN_CANCELLED
+    end
+    Note over C,S: Client may trigger another RunAgentInput to continue the conversation
+        </div>
+    </div>
+</div>
+</body>
+</html>

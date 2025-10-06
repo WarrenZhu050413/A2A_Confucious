@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Prompt Template & Routing Detail</title>
+<style>
+:root {
+    --chinese-red:#8B0000;
+    --chinese-gold:#FFD700;
+    --paper-beige:#F5F5DC;
+    --light-cream:#FFFEF0;
+    --ink-black:#1a1a1a;
+    --level-1:#8B0000;
+    --level-2:#CD5C5C;
+    --level-3:#666;
+    --level-4:#999;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:linear-gradient(135deg,var(--paper-beige)0%,var(--light-cream)100%);
+    color:var(--ink-black);
+    margin:0;
+    padding:0;
+    width:100vw;
+    max-width:100%;
+    line-height:1.2;
+    font-size:14px;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',Roboto,Arial,sans-serif;
+}
+.container{width:100%;padding:0;margin:0;}
+h1{
+    font-size:24px;font-weight:900;margin:4px 0;padding:6px 4px;
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+    letter-spacing:-0.5px;
+}
+h2{
+    font-size:18px;font-weight:700;margin:8px 0 4px 0;padding:4px;
+    border-left:4px solid var(--chinese-red);
+    background:rgba(139,0,0,0.03);
+    color:var(--level-1);
+}
+h3{
+    font-size:14px;font-weight:600;margin:4px 0 2px 8px;color:var(--level-2);
+    text-transform:uppercase;letter-spacing:0.5px;
+}
+h4{
+    font-size:12px;font-weight:500;margin:2px 0 1px 16px;color:var(--level-3);
+}
+h5,h6{
+    font-size:11px;font-weight:500;margin:1px 0 1px 24px;color:var(--level-4);
+}
+button{
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    color:#fff;border:1px solid rgba(255,215,0,0.3);
+    transition:all .2s ease;padding:4px 10px;margin:2px;font-size:12px;
+    border-radius:2px;cursor:pointer;font-weight:600;
+}
+button:hover{transform:translateY(-1px);box-shadow:0 1px 4px rgba(139,0,0,0.3);}
+.two-column-layout{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;padding:4px;}
+.full-width{grid-column:1 / -1;}
+.collapsible{border:1px solid rgba(139,0,0,0.12);background:white;}
+.collapsible-header{cursor:pointer;padding:6px 10px;background:linear-gradient(135deg,rgba(139,0,0,0.08),rgba(255,215,0,0.05));border-left:3px solid var(--chinese-gold);display:flex;justify-content:space-between;align-items:center;font-weight:600;font-size:13px;color:var(--level-2);}
+.collapsible-header .arrow{transition:transform 0.3s ease;font-size:11px;color:var(--chinese-red);}
+.collapsible.open .collapsible-header .arrow{transform:rotate(90deg);}
+.collapsible-content{max-height:0;overflow:hidden;transition:max-height 0.3s ease;padding:0 10px;}
+.collapsible.open .collapsible-content{max-height:2200px;padding:6px 10px 8px 10px;}
+.dense-list{list-style:none;padding:0;margin:0;}
+.dense-list li{padding:2px 0 2px 14px;border-left:2px solid transparent;position:relative;line-height:1.2;}
+.dense-list li:before{content:"▸";position:absolute;left:0;font-size:10px;color:var(--chinese-red);}
+.dense-list li strong{color:var(--level-2);font-weight:600;}
+.badge{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(139,0,0,0.14);color:var(--level-1);}
+.tag{display:inline-block;background:rgba(255,215,0,0.2);border:1px solid rgba(139,0,0,0.2);border-radius:999px;padding:1px 6px;font-size:10px;margin-right:4px;color:var(--level-2);}
+.important-always-visible{background:linear-gradient(135deg,rgba(255,215,0,0.18),white);border:2px solid var(--chinese-gold);padding:8px;margin:4px;box-shadow:0 1px 4px rgba(139,0,0,0.16);}
+pre{font-family:'SF Mono','Menlo','Consolas',monospace;background:rgba(0,0,0,0.05);padding:6px;border-radius:3px;font-size:11px;line-height:1.3;white-space:pre-wrap;word-break:break-word;}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0;background:white;}
+th,td{border:1px solid rgba(139,0,0,0.15);padding:4px 6px;text-align:left;}
+th{background:rgba(139,0,0,0.08);color:var(--level-1);font-weight:700;}
+.muted{color:var(--level-4);}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Confucian Café · Prompt Template & Routing</h1>
+<div style="text-align:right;margin:4px 4px 0 0;">
+<button id="expand-all">Expand All</button>
+<button id="collapse-all">Collapse All</button>
+</div>
+</header>
+<section class="important-always-visible">
+<h2>🎯 Immediate Answers</h2>
+<div class="two-column-layout">
+<ul class="dense-list">
+<li><strong>Audience Routing:</strong> Yes—each user prompt sets a target (`all` or a specific philosopher) before the moderator forwards it.citeclaude_html/confucian_cafe_ui_react_demo.html:731</li>
+<li><strong>Thinking vs Output:</strong> We separate internal reasoning (`insight`) from public prose (`surface`) by forcing the agents to emit a JSON object that the moderator disassembles into stream events.citeclaude_html/confucian_cafe_ui_react_mockup.html:561claude_html/confucian_cafe_ui_react_demo.html:677</li>
+</ul>
+<ul class="dense-list">
+<li><strong>Context Sharing:</strong> Moderator injects prior philosopher statements via `metadata.context`, so critiques and syntheses stay grounded.citeclaude_html/confucian_philosophers_a2a_architecture.html:1176claude_html/confucian_philosophers_a2a_architecture.html:1194</li>
+<li><strong>Persona Backbone:</strong> Persona canon and skills come from each agent card and system prompt file.citeclaude_html/confucian_philosophers_a2a_architecture.html:552claude_html/confucian_philosophers_a2a_architecture.html:615claude_html/confucian_philosophers_a2a_architecture.html:672claude_html/confucian_philosophers_a2a_architecture.html:983</li>
+</ul>
+</div>
+</section>
+<main class="two-column-layout">
+<div class="collapsible" data-collapsible="open">
+<div class="collapsible-header"><span>⚙️ XML Prompt Template</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<p>Everything the philosopher model sees is assembled into the following XML skeleton; placeholders in braces are replaced at runtime.</p>
+<pre>&lt;Prompt&gt;
+  &lt;SystemPersona source="agent-card" philosopher="{philosopher_id}" version="{card.version}"&gt;
+    &lt;![CDATA[
+    {persona_core_doctrine}
+    Primary virtues / concepts: {core_concepts}.
+    Speaking style cues: {style_bullets}.
+    ]]&gt;
+  &lt;/SystemPersona&gt;
+
+  &lt;RoundDirective type="{round_type}" source="moderator" audience="{audience}"&gt;
+    &lt;Instruction&gt;{round_instruction}&lt;/Instruction&gt;
+    &lt;Constraints&gt;
+      &lt;Length maxWords="{surface_word_cap}" /&gt;
+      &lt;Tone&gt;{tone_guidance}&lt;/Tone&gt;
+    &lt;/Constraints&gt;
+  &lt;/RoundDirective&gt;
+
+  &lt;OutputContract source="ui-contract" schema="confucian_cafe.v1"&gt;
+&lt;![CDATA[
+Return valid JSON:
+{
+  "surface": string,              // public English answer; key terms may include pinyin+hanzi
+  "translations": {
+      "modern"?: string,
+      "classical"?: string
+  },
+  "insight": string,              // private reasoning; do not repeat surface text
+  "citations": string[]           // optional references used in surface
+}
+Ensure surface and insight differ materially and obey persona tone.
+]]&gt;
+  &lt;/OutputContract&gt;
+
+  &lt;Context source="moderator" conversationId="{conversation_id}" round="{round_index}"&gt;
+    &lt;UserPrompt route="{audience}" timestamp="{timestamp}"&gt;
+      &lt;![CDATA[{user_prompt}]]&gt;
+    &lt;/UserPrompt&gt;
+    &lt;PeerStatements&gt;
+      {#for context in prior_statements}
+      &lt;Statement speaker="{context.speaker}" phase="{context.phase}"&gt;
+        &lt;![CDATA[{context.surface}]]&gt;
+      &lt;/Statement&gt;
+      {#/for}
+    &lt;/PeerStatements&gt;
+    &lt;UIFlags showInsights="{show_insights}" requireTranslations="{translation_preferences}" /&gt;
+  &lt;/Context&gt;
+
+  &lt;Safety&gt;
+    &lt;Rule&gt;Never expose private insight text in surface or translations.&lt;/Rule&gt;
+    &lt;Rule&gt;Respect historical accuracy; admit uncertainty if evidence lacking.&lt;/Rule&gt;
+  &lt;/Safety&gt;
+&lt;/Prompt&gt;</pre>
+<p>Inference: the JSON contract mirrors the event payload types expected by the frontend, enabling clean mapping from model output to UI layers.citeclaude_html/confucian_cafe_ui_react_mockup.html:561claude_html/confucian_cafe_ui_react_demo.html:677</p>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>📬 Audience Routing Logic</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<h3>User Intent → Moderator</h3>
+<ul class="dense-list">
+<li><strong>Selection:</strong> `PromptComposer` sets `audience` to `all` or a philosopher id before emit.citeclaude_html/confucian_cafe_ui_react_demo.html:731</li>
+<li><strong>Broadcast:</strong> For `all`, moderator loops through roster and injects identical `RoundDirective` text customized per persona.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171</li>
+<li><strong>Direct Message:</strong> If `audience` targets one philosopher, we pass only that agent’s endpoint and tag the XML `audience` attribute accordingly (no loop).citeclaude_html/confucian_cafe_ui_react_demo.html:763</li>
+</ul>
+<h3>Context Handling</h3>
+<ul class="dense-list">
+<li><strong>Context Array:</strong> Moderator appends prior surfaces into `metadata.context`; we reformat them into the XML `<PeerStatements>` block.citeclaude_html/confucian_philosophers_a2a_architecture.html:1176claude_html/confucian_philosophers_a2a_architecture.html:1194</li>
+<li><strong>Round Awareness:</strong> Critique rounds include the specific target’s last response; synthesis round supplies all initial positions.citeclaude_html/confucian_philosophers_a2a_architecture.html:1194claude_html/confucian_philosophers_a2a_architecture.html:1233</li>
+</ul>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🔀 Scenario-driven Prompt Tweaks</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<table>
+<thead><tr><th>Scenario</th><th>Prompt Adjustments</th><th>Reason</th></tr></thead>
+<tbody>
+<tr><td>Initial broadcast (Phase 1)</td><td>`round_type="introduce"`; instruction asks for core view on topic; `context` empty.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171</td><td>Establish baseline stances without bias.</td></tr>
+<tr><td>Cross-response critique</td><td>`round_type="critique"`; include target’s latest surface in `<PeerStatements>`; add clause “Address {target}’s claim directly.”citeclaude_html/confucian_philosophers_a2a_architecture.html:1194</td><td>Ensure criticism references concrete arguments.</td></tr>
+<tr><td>Synthesis</td><td>`round_type="synthesis"`; supply all initial positions; add requirement to reconcile overlaps.citeclaude_html/confucian_philosophers_a2a_architecture.html:1237</td><td>Guide toward consensus-building.</td></tr>
+<tr><td>User direct to Mozi</td><td>Set `audience="mozi"`; tone emphasises pragmatic audit; may tighten `maxWords` to focus on actionable steps.citeclaude_html/confucian_cafe_ui_react_demo.html:763claude_html/confucian_philosophers_a2a_architecture.html:672</td><td>Reflect Mohist efficiency when singled out.</td></tr>
+<tr><td>Insights disabled in UI</td><td>Flip `<UIFlags showInsights="false">`; add reminder “If insight produced, keep concise—may be withheld.”citeclaude_html/confucian_cafe_ui_react_demo.html:488claude_html/confucian_cafe_ui_react_demo.html:804</td><td>Moderator still receives private rationale but may drop from stream.</td></tr>
+<tr><td>Translation auto-on</td><td>Set `<UIFlags requireTranslations="modern,classical">`; add clause “Populate both translation fields even if brief.”citeclaude_html/confucian_cafe_ui_react_demo.html:677claude_html/confucian_cafe_ui_react_demo.html:773</td><td>Keep language layers ready when toggled by user.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🗺️ Origin of Prompt Segments</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<table>
+<thead><tr><th>XML Segment</th><th>Data Source</th><th>Notes</th></tr></thead>
+<tbody>
+<tr><td>`SystemPersona`</td><td>Agent card JSON + persona prompt script.citeclaude_html/confucian_philosophers_a2a_architecture.html:552claude_html/confucian_philosophers_a2a_architecture.html:983</td><td>Static per philosopher; stored alongside agent binaries.</td></tr>
+<tr><td>`RoundDirective`</td><td>Moderator dialogue manager logic.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171claude_html/confucian_philosophers_a2a_architecture.html:1230</td><td>Changes each round or user injection.</td></tr>
+<tr><td>`OutputContract`</td><td>UI event schema for messages/translations/insights.citeclaude_html/confucian_cafe_ui_react_mockup.html:561claude_html/confucian_cafe_ui_react_demo.html:677</td><td>Inference: ensures compatibility with frontend toggles.</td></tr>
+<tr><td>`Context`</td><td>Moderator metadata, user prompt payload, UI flags.citeclaude_html/confucian_cafe_ui_react_demo.html:731claude_html/confucian_philosophers_a2a_architecture.html:1176</td><td>Dynamic—updates per turn.</td></tr>
+<tr><td>`Safety`</td><td>Hard-coded moderation rules per project guidelines. (No direct source; chosen to prevent leakage.)</td><td>Can be expanded with additional policy hooks.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🧪 Implementation Checklist</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Schema lint:</strong> Validate XML→JSON assembly before dispatch; reject malformed agent replies.citeclaude_html/confucian_philosophers_a2a_architecture.html:1131</li>
+<li><strong>Toggle test:</strong> Simulate `showInsights=false` to ensure moderator drops insight events while keeping surface text.citeclaude_html/confucian_cafe_ui_react_demo.html:488claude_html/confucian_cafe_ui_react_demo.html:804</li>
+<li><strong>Round regression:</strong> Run scripted dialogue covering introduce→critique→synthesis to confirm directives mutate as expected.citeclaude_html/confucian_philosophers_a2a_architecture.html:1171claude_html/confucian_philosophers_a2a_architecture.html:1194claude_html/confucian_philosophers_a2a_architecture.html:1237</li>
+</ul>
+</div>
+</div>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('[data-collapsible]').forEach(function(section){
+        const isOpen=section.getAttribute('data-collapsible')==='open';
+        section.classList.add('collapsible');
+        if(isOpen) section.classList.add('open');
+    });
+    document.querySelectorAll('.collapsible-header').forEach(function(header){
+        header.addEventListener('click',function(){
+            const collapsible=this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+    const expandAllBtn=document.getElementById('expand-all');
+    const collapseAllBtn=document.getElementById('collapse-all');
+    if(expandAllBtn){
+        expandAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.add('open');});
+        });
+    }
+    if(collapseAllBtn){
+        collapseAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.remove('open');});
+        });
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confucian Café: Internal Thoughts Architecture</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        :root {
+            --chinese-red: #8B0000;
+            --chinese-gold: #FFD700;
+            --paper-beige: #F5F5DC;
+            --light-cream: #FFFEF0;
+            --ink-black: #1a1a1a;
+            --level-1: #8B0000;
+            --level-2: #CD5C5C;
+            --level-3: #666;
+            --level-4: #999;
+            --confucius-blue: #4A90E2;
+            --laotse-green: #50C878;
+            --mozi-purple: #9370DB;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+            color: var(--ink-black);
+            margin: 0; padding: 0; width: 100vw; max-width: 100%;
+            line-height: 1.3; font-size: 14px;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, Arial, sans-serif;
+        }
+
+        .container { width: 100%; padding: 0; margin: 0; }
+
+        h1 {
+            font-size: 32px; font-weight: 900; margin: 12px 0; padding: 16px 12px;
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px; text-align: center;
+        }
+
+        h2 {
+            font-size: 22px; font-weight: 700; margin: 16px 0 8px 0; padding: 8px 12px;
+            border-left: 4px solid var(--chinese-red); background: rgba(139, 0, 0, 0.05);
+            color: var(--level-1);
+        }
+
+        h3 {
+            font-size: 18px; font-weight: 600; margin: 12px 0 6px 12px;
+            color: var(--level-2); text-transform: uppercase; letter-spacing: 0.5px;
+        }
+
+        h4 {
+            font-size: 15px; font-weight: 600; margin: 8px 0 4px 16px;
+            color: var(--level-3);
+        }
+
+        .important-always-visible {
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.15), white);
+            border: 3px solid var(--chinese-gold); padding: 16px; margin: 20px 12px;
+            border-radius: 4px; box-shadow: 0 2px 8px rgba(139, 0, 0, 0.1);
+        }
+
+        .important-always-visible h2 {
+            color: var(--chinese-red); margin-top: 0;
+            border-left: none; background: none; padding-left: 0;
+        }
+
+        .collapsible { margin: 8px 12px; width: calc(100% - 24px); }
+
+        .collapsible-header {
+            cursor: pointer; padding: 10px 16px;
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.06), rgba(255, 215, 0, 0.03));
+            border-left: 3px solid var(--chinese-gold);
+            display: flex; align-items: center; justify-content: space-between;
+            user-select: none; transition: all 0.2s ease;
+            font-weight: 600; font-size: 16px; color: var(--level-2);
+        }
+
+        .collapsible-header:hover {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.12), rgba(255, 215, 0, 0.06));
+        }
+
+        .collapsible-header .arrow {
+            display: inline-block; transition: transform 0.3s ease;
+            color: var(--chinese-red); font-size: 14px; font-weight: bold;
+        }
+
+        .collapsible.open .arrow { transform: rotate(90deg); }
+
+        .collapsible-content {
+            max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
+            padding: 0 16px; margin-left: 12px;
+        }
+
+        .collapsible.open .collapsible-content {
+            max-height: 30000px; padding: 16px;
+        }
+
+        .collapsible.critical .collapsible-header {
+            border-left: 4px solid var(--chinese-red);
+            background: rgba(139, 0, 0, 0.1);
+            font-weight: 700; font-size: 17px;
+        }
+
+        .two-column-layout {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 8px;
+        }
+
+        .card {
+            background: white; border: 1px solid rgba(139, 0, 0, 0.2);
+            border-radius: 3px; padding: 12px; margin: 8px 0;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .card.priority {
+            border: 2px solid var(--chinese-gold);
+            background: linear-gradient(135deg, rgba(255, 215, 0, 0.08), white);
+        }
+
+        .card h4 { margin: 0 0 8px 0; color: var(--chinese-red); }
+
+        .dense-list {
+            list-style: none; padding: 0; margin: 8px 0 8px 12px;
+        }
+
+        .dense-list li {
+            padding: 4px 0 4px 16px; border-left: 2px solid transparent;
+            position: relative; line-height: 1.5;
+        }
+
+        .dense-list li:before {
+            content: "▸"; position: absolute; left: 0;
+            color: var(--chinese-red); font-size: 12px;
+        }
+
+        .dense-list li strong { color: var(--level-2); font-weight: 600; }
+
+        pre, code {
+            background: linear-gradient(135deg, rgba(245, 245, 220, 0.4), rgba(255, 255, 255, 0.6));
+            border: 1px solid rgba(139, 0, 0, 0.15);
+            padding: 2px 6px; margin: 2px 0; font-size: 12px; line-height: 1.3;
+            font-family: 'SF Mono', 'Monaco', 'Consolas', monospace; border-radius: 2px;
+        }
+
+        pre { padding: 12px; margin: 8px 0; overflow-x: auto; }
+
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, var(--chinese-red), transparent);
+            margin: 20px 12px;
+        }
+
+        .highlight-box {
+            background: rgba(255, 215, 0, 0.1); border-left: 4px solid var(--chinese-gold);
+            padding: 12px 16px; margin: 12px 0;
+        }
+
+        button, .button {
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            color: white; border: 1px solid rgba(255, 215, 0, 0.3);
+            transition: all 0.2s ease; padding: 6px 14px; margin: 2px;
+            font-size: 14px; line-height: 1.3; border-radius: 3px;
+            cursor: pointer; font-weight: 600;
+        }
+
+        button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(139, 0, 0, 0.3);
+            border-color: var(--chinese-gold);
+        }
+
+        .expand-all-btn {
+            position: fixed; top: 20px; right: 20px; z-index: 1000;
+        }
+
+        .mermaid {
+            background: white; padding: 20px; margin: 16px 0;
+            border: 2px solid var(--chinese-gold); border-radius: 4px;
+            overflow-x: auto;
+        }
+
+        .mockup {
+            border: 2px solid var(--chinese-gold);
+            border-radius: 8px;
+            overflow: hidden;
+            margin: 16px 0;
+            background: white;
+        }
+
+        .mockup-header {
+            background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+            color: white;
+            padding: 12px;
+            font-weight: bold;
+        }
+
+        .mockup-content {
+            padding: 16px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button class="expand-all-btn" onclick="toggleAll()">Expand All</button>
+
+        <h1>🧠 Internal Thoughts Feature</h1>
+        <h1 style="font-size: 20px; margin-top: -8px;">Peek into Each Philosopher's Reasoning Process</h1>
+
+        <div class="important-always-visible">
+            <h2>🎯 Feature Overview</h2>
+            <p style="font-size: 16px; line-height: 1.6; margin: 10px 0;">
+                Users can now view the <strong>internal reasoning process</strong> of each philosopher in real-time, alongside the public dialogue. This creates a two-layer experience:
+            </p>
+
+            <div class="two-column-layout" style="margin-top: 12px;">
+                <div class="card">
+                    <h4>💬 Public Dialogue Stream</h4>
+                    <p style="font-size: 13px;">The polished, final responses each philosopher shares with others</p>
+                </div>
+                <div class="card priority">
+                    <h4>🧠 Internal Thoughts Stream</h4>
+                    <p style="font-size: 13px;">The raw reasoning, deliberation, and chain-of-thought before the final answer</p>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="margin-top: 16px;">
+                <strong style="color: var(--chinese-red); font-size: 15px;">Implementation:</strong>
+                <span style="font-size: 14px;">Use Claude's chain-of-thought prompting + A2A artifact metadata to transmit both streams simultaneously</span>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> Architecture: Dual-Stream A2A Response</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Data Flow: Internal Thoughts + Public Response</h3>
+                <div class="mermaid">
+sequenceDiagram
+    participant Mod as Moderator
+    participant Conf as Confucius Agent
+    participant Claude as Claude API
+    participant UI as React UI
+
+    Mod->>Conf: A2A tasks/send<br/>"What is a good life?"
+
+    Note over Conf: Use chain-of-thought prompt
+    Conf->>Claude: Query with system prompt:<br/>"Think step-by-step in <thinking> tags,<br/>then provide final answer"
+
+    Claude-->>Conf: Response with structure:<br/><thinking>Let me consider...<br/>Ren (仁) is central...<br/>But how does li (禮) relate?<br/></thinking><br/><answer>A good life...</answer>
+
+    Note over Conf: Parse response into two artifacts
+    Conf->>Conf: Extract <thinking> → internal_thoughts<br/>Extract <answer> → public_response
+
+    Conf-->>Mod: A2A Task Result:<br/>{<br/> artifacts: [<br/>  {id: "internal", type: "thoughts", text: "..."},<br/>  {id: "public", type: "response", text: "..."}<br/> ]<br/>}
+
+    Mod->>UI: SSE Event:<br/>{<br/> philosopher: "confucius",<br/> internalThoughts: "Let me consider...",<br/> publicResponse: "A good life..."<br/>}
+
+    UI->>UI: Display in split view:<br/>- Main chat: public response<br/>- Expandable panel: internal thoughts
+                </div>
+
+                <h3>A2A Artifact Structure with Dual Streams</h3>
+                <pre>{
+  "jsonrpc": "2.0",
+  "result": {
+    "id": "task-conf-001",
+    "contextId": "dialogue-good-life",
+    "status": {
+      "state": "completed",
+      "timestamp": "2025-10-03T15:30:00Z"
+    },
+    "artifacts": [
+      {
+        "artifactId": "conf-thoughts-001",
+        "type": "internal_reasoning",
+        "parts": [{
+          "kind": "text",
+          "text": "Let me carefully consider this question about the good life...\n\nFirst, I should establish what 'good' means in the Confucian tradition. The character 德 (de - virtue) is paramount. But simply stating 'virtue is good' would be circular reasoning.\n\nI need to explain WHY virtue leads to a good life. The relationship between personal cultivation (修身) and social harmony (和諧) is key here.\n\nShould I cite the Analects directly? Yes, but not excessively. Book 7, verse 6 about self-reflection would be relevant.\n\nPotential objection: What about people who are virtuous but suffer? I should address this by distinguishing between external circumstances and internal flourishing.\n\nFinal structure: \n1. Define good life via virtue cultivation\n2. Connect to social relationships\n3. Explain the process of self-cultivation\n4. Address the role of ritual propriety (禮)"
+        }]
+      },
+      {
+        "artifactId": "conf-response-001",
+        "type": "public_response",
+        "parts": [{
+          "kind": "text",
+          "text": "A good life is achieved through the cultivation of virtue (德 de) and the practice of ritual propriety (禮 li). One must strive to become a junzi (君子), an exemplary person who embodies benevolence (仁 ren) and righteousness (義 yi).\n\nThe path involves:\n1. Self-cultivation through study and reflection\n2. Proper relationships: filial piety to parents, loyalty to rulers, sincerity with friends\n3. Observance of rituals that create social harmony\n4. Continuous learning and moral refinement\n\nThe good life is not found in isolation, but in harmonious social relationships where each person fulfills their role with integrity."
+        }]
+      }
+    ],
+    "kind": "task"
+  }
+}</pre>
+
+                <h3>Enhanced Agent Implementation</h3>
+                <pre># agents/confucius/main.py (with internal thoughts)
+
+async def handle_task(self, task_data: dict) -> dict:
+    """Process A2A task with dual-stream output"""
+
+    # ... extract task details ...
+
+    # Enhanced system prompt for chain-of-thought
+    system_prompt = """You are Confucius (孔子, 551-479 BCE).
+
+Core Philosophy: [same as before]
+
+IMPORTANT OUTPUT FORMAT:
+Before providing your final response, think through your reasoning in <thinking> tags.
+Then provide your polished response in <answer> tags.
+
+Example:
+<thinking>
+Let me consider the question carefully...
+- First, I should establish X
+- The relationship between Y and Z is important
+- Potential objection: what about W?
+- I'll structure my response as: 1, 2, 3
+</thinking>
+
+<answer>
+[Your final, polished philosophical response here]
+</answer>
+
+Keep thinking sections honest and exploratory. Show your reasoning process."""
+
+    # Query Claude
+    options = ClaudeAgentOptions(
+        system_prompt=system_prompt,
+        model="claude-3-5-sonnet-20241022",
+        max_tokens=2000  # Increased for thinking + answer
+    )
+
+    full_response = ""
+    async for message in query(prompt=user_message, options=options):
+        if hasattr(message, 'text'):
+            full_response += message.text
+
+    # Parse thinking and answer sections
+    thinking_match = re.search(r'<thinking>(.*?)</thinking>', full_response, re.DOTALL)
+    answer_match = re.search(r'<answer>(.*?)</answer>', full_response, re.DOTALL)
+
+    internal_thoughts = thinking_match.group(1).strip() if thinking_match else ""
+    public_response = answer_match.group(1).strip() if answer_match else full_response
+
+    # Return A2A response with dual artifacts
+    return {
+        "id": task_id,
+        "contextId": context_id,
+        "status": {
+            "state": "completed",
+            "timestamp": self._timestamp()
+        },
+        "artifacts": [
+            {
+                "artifactId": f"conf-thoughts-{task_id}",
+                "type": "internal_reasoning",
+                "parts": [{
+                    "kind": "text",
+                    "text": internal_thoughts
+                }]
+            },
+            {
+                "artifactId": f"conf-response-{task_id}",
+                "type": "public_response",
+                "parts": [{
+                    "kind": "text",
+                    "text": public_response
+                }]
+            }
+        ],
+        "kind": "task"
+    }</pre>
+
+                <h3>Moderator Enhancement: Forward Both Streams</h3>
+                <pre># moderator/main.py
+
+async def send_a2a_task(self, philosopher: str, prompt: str, context: list = None):
+    """Send A2A task and extract dual streams"""
+
+    # ... send request ...
+
+    if "result" in result:
+        task = result["result"]
+        if task["status"]["state"] == "completed":
+            artifacts = task["artifacts"]
+
+            # Find internal thoughts and public response
+            internal_thoughts = next(
+                (a["parts"][0]["text"] for a in artifacts if a.get("type") == "internal_reasoning"),
+                None
+            )
+            public_response = next(
+                (a["parts"][0]["text"] for a in artifacts if a.get("type") == "public_response"),
+                artifacts[0]["parts"][0]["text"]  # Fallback to first artifact
+            )
+
+            return {
+                "internalThoughts": internal_thoughts,
+                "publicResponse": public_response
+            }
+
+    raise Exception("Task failed")
+
+async def run_dialogue(self, topic: str):
+    """Execute dialogue with dual streams"""
+
+    for phil in ["confucius", "laotse", "mozi"]:
+        prompt = f"Share your philosophical view on: {topic}"
+        dual_response = await self.send_a2a_task(phil, prompt)
+
+        entry = {
+            "round": 1,
+            "philosopher": phil,
+            "type": "position",
+            "internalThoughts": dual_response["internalThoughts"],
+            "publicResponse": dual_response["publicResponse"]
+        }
+
+        self.transcript.append(entry)
+        yield json.dumps(entry) + "\n"</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> React UI: Split-View Interface</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>UI Design: Main Chat + Expandable Thoughts Panel</h3>
+
+                <div class="mockup">
+                    <div class="mockup-header">Confucian Café - Dialogue View</div>
+                    <div class="mockup-content">
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 16px;">
+                            <div>
+                                <h4 style="margin-bottom: 12px;">💬 Public Dialogue</h4>
+                                <div style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #4A90E2;">
+                                    <div style="font-weight: bold; margin-bottom: 4px;">CONFUCIUS</div>
+                                    <div style="font-size: 13px;">A good life is achieved through virtue (德) and ritual propriety (禮)...</div>
+                                    <button style="background: #4A90E2; padding: 4px 8px; margin-top: 8px; font-size: 11px;">
+                                        🧠 Show Internal Thoughts
+                                    </button>
+                                </div>
+                                <div style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; margin-bottom: 8px; border-left: 4px solid #50C878;">
+                                    <div style="font-weight: bold; margin-bottom: 4px;">LAO TSE</div>
+                                    <div style="font-size: 13px;">The good life flows from alignment with the Dao (道)...</div>
+                                    <button style="background: #50C878; padding: 4px 8px; margin-top: 8px; font-size: 11px;">
+                                        🧠 Show Internal Thoughts
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: 12px;">🧠 Internal Thoughts</h4>
+                                <div style="border: 1px solid #ddd; border-radius: 4px; padding: 12px; background: #f9f9f9;">
+                                    <div style="font-weight: bold; margin-bottom: 8px; color: #4A90E2;">CONFUCIUS' REASONING:</div>
+                                    <div style="font-size: 12px; font-style: italic; line-height: 1.6;">
+                                        "Let me carefully consider this question...<br><br>
+                                        First, I should establish what 'good' means in the Confucian tradition. The character 德 (de - virtue) is paramount.<br><br>
+                                        Should I cite the Analects directly? Yes, but not excessively...<br><br>
+                                        Potential objection: What about those who are virtuous but suffer? I should address this..."
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3>React Component Implementation</h3>
+                <pre>// frontend/src/components/DialogueMessage.tsx
+
+interface MessageProps {
+  philosopher: 'confucius' | 'laotse' | 'mozi';
+  publicResponse: string;
+  internalThoughts?: string;
+  round: number;
+  type: 'position' | 'critique' | 'synthesis';
+}
+
+export const DialogueMessage: React.FC<MessageProps> = ({
+  philosopher,
+  publicResponse,
+  internalThoughts,
+  round,
+  type
+}) => {
+  const [showThoughts, setShowThoughts] = useState(false);
+
+  const colors = {
+    confucius: { border: 'border-blue-500', bg: 'bg-blue-50', button: 'bg-blue-500' },
+    laotse: { border: 'border-green-500', bg: 'bg-green-50', button: 'bg-green-500' },
+    mozi: { border: 'border-purple-500', bg: 'bg-purple-50', button: 'bg-purple-500' }
+  };
+
+  const color = colors[philosopher];
+
+  return (
+    <div className={`card border-l-4 ${color.border} mb-4`}>
+      {/* Public Response */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="font-bold text-lg">
+            {philosopher.toUpperCase()}
+          </div>
+          <div className="text-xs text-gray-500">
+            Round {round} • {type}
+          </div>
+        </div>
+
+        <div className="text-sm mb-3 whitespace-pre-wrap">
+          {publicResponse}
+        </div>
+
+        {/* Toggle Internal Thoughts Button */}
+        {internalThoughts && (
+          <button
+            onClick={() => setShowThoughts(!showThoughts)}
+            className={`text-white ${color.button} px-3 py-1 rounded text-xs`}
+          >
+            🧠 {showThoughts ? 'Hide' : 'Show'} Internal Thoughts
+          </button>
+        )}
+      </div>
+
+      {/* Internal Thoughts Panel (Expandable) */}
+      {internalThoughts && showThoughts && (
+        <div className={`${color.bg} border-t p-4`}>
+          <div className="flex items-center mb-2">
+            <span className="text-sm font-semibold">💭 Internal Reasoning:</span>
+          </div>
+          <div className="text-xs italic text-gray-700 whitespace-pre-wrap leading-relaxed">
+            {internalThoughts}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};</pre>
+
+                <h3>Alternative: Side-by-Side Split View</h3>
+                <pre>// frontend/src/components/SplitViewDialogue.tsx
+
+export const SplitViewDialogue: React.FC = () => {
+  const [messages, setMessages] = useState<MessageProps[]>([]);
+  const [selectedPhilosopher, setSelectedPhilosopher] = useState<string | null>(null);
+
+  return (
+    <div className="grid grid-cols-3 gap-4 h-screen">
+      {/* Left: Public Dialogue Stream */}
+      <div className="col-span-2 overflow-y-auto p-4">
+        <h2 className="text-2xl font-bold mb-4">💬 Public Dialogue</h2>
+        {messages.map((msg, idx) => (
+          <div
+            key={idx}
+            onClick={() => setSelectedPhilosopher(msg.philosopher)}
+            className="cursor-pointer hover:shadow-lg transition"
+          >
+            <DialogueMessage {...msg} showThoughtsButton={false} />
+          </div>
+        ))}
+      </div>
+
+      {/* Right: Internal Thoughts Panel */}
+      <div className="border-l bg-gray-50 overflow-y-auto p-4">
+        <h2 className="text-xl font-bold mb-4">🧠 Internal Thoughts</h2>
+
+        {selectedPhilosopher ? (
+          <div>
+            <div className="mb-4">
+              <span className="font-semibold">Viewing:</span> {selectedPhilosopher.toUpperCase()}
+            </div>
+            {messages
+              .filter(m => m.philosopher === selectedPhilosopher)
+              .map((msg, idx) => (
+                <div key={idx} className="mb-6">
+                  <div className="text-xs text-gray-500 mb-2">
+                    Round {msg.round} • {msg.type}
+                  </div>
+                  <div className="text-sm italic bg-white p-3 rounded border">
+                    {msg.internalThoughts || 'No internal thoughts available'}
+                  </div>
+                </div>
+              ))}
+          </div>
+        ) : (
+          <div className="text-center text-gray-500 mt-8">
+            Click on a message to view internal thoughts
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};</pre>
+
+                <h3>Enhanced TypeScript Types</h3>
+                <pre>// frontend/src/types/index.ts
+
+export interface PhilosopherMessage {
+  round: number;
+  philosopher: 'confucius' | 'laotse' | 'mozi';
+  type: 'position' | 'critique' | 'synthesis';
+
+  // Dual streams
+  publicResponse: string;
+  internalThoughts?: string;  // Optional: may not always be present
+
+  // Metadata
+  timestamp?: string;
+  wordCount?: number;
+}
+
+export interface DialogueTranscript {
+  topic: string;
+  startTime: string;
+  endTime?: string;
+  messages: PhilosopherMessage[];
+}
+
+export interface A2AArtifact {
+  artifactId: string;
+  type: 'internal_reasoning' | 'public_response' | 'citation' | 'analogy';
+  parts: Array<{
+    kind: 'text' | 'image' | 'structured';
+    text?: string;
+    data?: any;
+  }>;
+}</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="collapsible critical open">
+            <div class="collapsible-header" onclick="toggle(this)">
+                <span><span class="arrow">▶</span> Advanced Features & Extensions</span>
+            </div>
+            <div class="collapsible-content">
+                <h3>Feature: Compare Internal Reasoning Across Philosophers</h3>
+                <div class="card priority">
+                    <h4>Side-by-Side Comparison View</h4>
+                    <ul class="dense-list">
+                        <li>User selects a specific round (e.g., Round 1: Initial Positions)</li>
+                        <li>UI displays all three philosophers' internal thoughts side-by-side</li>
+                        <li>Highlights differences in reasoning approach:
+                            <ul class="dense-list" style="margin-left: 20px;">
+                                <li>Confucius: Cites historical precedents, focuses on social relationships</li>
+                                <li>Lao Tse: Uses metaphors from nature, questions premises</li>
+                                <li>Mozi: Applies utilitarian calculus, evaluates consequences</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+                <h3>Feature: Reasoning Analytics</h3>
+                <div class="card">
+                    <h4>Metadata Extraction from Internal Thoughts</h4>
+                    <ul class="dense-list">
+                        <li><strong>Concepts Referenced:</strong> Extract philosophical terms (ren, li, dao, jian ai)</li>
+                        <li><strong>Reasoning Patterns:</strong> Identify analogies, citations, objections addressed</li>
+                        <li><strong>Deliberation Time:</strong> Track how long each philosopher "thinks" (LLM tokens/time)</li>
+                        <li><strong>Confidence Level:</strong> Parse phrases like "I'm certain", "Perhaps", "I must consider"</li>
+                    </ul>
+                    <pre style="margin-top: 8px;">{
+  "philosopher": "confucius",
+  "analytics": {
+    "conceptsUsed": ["ren", "li", "junzi", "xiao"],
+    "citationsCount": 2,
+    "analogiesUsed": ["water flowing downhill", "tree roots"],
+    "objectionsConsidered": 1,
+    "deliberationTokens": 450,
+    "confidenceLevel": "high"
+  }
+}</pre>
+                </div>
+
+                <h3>Feature: "Replay" Mode with Thought Evolution</h3>
+                <div class="card">
+                    <h4>Step-Through Reasoning Process</h4>
+                    <p style="font-size: 13px; margin-bottom: 8px;">
+                        Animate the thinking process as a timeline:
+                    </p>
+                    <ul class="dense-list">
+                        <li><strong>Step 1:</strong> "First, I should consider what 'good' means..."</li>
+                        <li><strong>Step 2:</strong> "The relationship between virtue and ritual is key..."</li>
+                        <li><strong>Step 3:</strong> "But what about those who are virtuous but suffer?"</li>
+                        <li><strong>Step 4:</strong> "I'll structure my response in 4 parts..."</li>
+                        <li><strong>Final:</strong> [Public response appears]</li>
+                    </ul>
+                    <p style="font-size: 13px; margin-top: 8px; font-style: italic;">
+                        User can scrub through the timeline to see how the argument was constructed
+                    </p>
+                </div>
+
+                <h3>Feature: Cross-Pollination Detection</h3>
+                <div class="card priority">
+                    <h4>Track When Philosophers Influence Each Other</h4>
+                    <p style="font-size: 13px; margin-bottom: 8px;">
+                        In Round 2 (Critiques), show how each philosopher's internal thoughts reference the others:
+                    </p>
+                    <pre>// Lao Tse's internal thoughts in Round 2:
+"Confucius speaks of ritual propriety (禮), but I must question whether
+such structures truly serve harmony or merely create artificial constraints.
+
+Let me consider: does his emphasis on social roles (the Five Relationships)
+actually align with the natural flow of the Dao?
+
+I should respond by contrasting wu wei (無為) with his prescription of duties..."</pre>
+                    <p style="font-size: 13px; margin-top: 8px;">
+                        UI highlights when one philosopher explicitly considers another's argument in their reasoning
+                    </p>
+                </div>
+
+                <h3>Feature: "Ask the Philosophers" Mode</h3>
+                <div class="card">
+                    <h4>User Interrupts Dialogue with Questions</h4>
+                    <ul class="dense-list">
+                        <li>During dialogue, user clicks "Ask a Question"</li>
+                        <li>User types: <em>"Confucius, how do you respond to Lao Tse's claim that rituals are artificial?"</em></li>
+                        <li>Moderator pauses dialogue, sends A2A task to Confucius</li>
+                        <li>Confucius agent receives question with full dialogue context</li>
+                        <li>Returns both internal thoughts ("Ah, this is a common critique...") and public response</li>
+                        <li>Dialogue resumes after user's question is answered</li>
+                    </ul>
+                </div>
+
+                <h3>Implementation: Enhanced A2A Artifact Types</h3>
+                <pre>// Extended artifact types for richer internal thoughts
+
+{
+  "artifacts": [
+    {
+      "artifactId": "conf-thoughts-detailed",
+      "type": "internal_reasoning",
+      "parts": [
+        {
+          "kind": "structured",
+          "data": {
+            "steps": [
+              {
+                "step": 1,
+                "thought": "First, I should consider what 'good' means...",
+                "timestamp": 0.0
+              },
+              {
+                "step": 2,
+                "thought": "The relationship between virtue and ritual...",
+                "timestamp": 1.2
+              }
+            ],
+            "conceptsConsidered": ["ren", "li", "de"],
+            "objectionsAddressed": [
+              "What about virtuous people who suffer?"
+            ],
+            "citationsPlanned": [
+              "Analects 7:6"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "artifactId": "conf-response-public",
+      "type": "public_response",
+      "parts": [
+        {
+          "kind": "text",
+          "text": "A good life is achieved through virtue..."
+        }
+      ]
+    }
+  ]
+}</pre>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div style="text-align: center; padding: 32px 20px; background: linear-gradient(135deg, rgba(139, 0, 0, 0.05), rgba(255, 215, 0, 0.05)); margin: 20px 12px; border-radius: 4px;">
+            <h2 style="margin: 0; font-size: 24px; color: var(--chinese-red);">🧠 Transparent Reasoning</h2>
+            <p style="margin: 16px 0 0 0; font-size: 15px; color: var(--level-3); line-height: 1.6;">
+                By exposing internal thoughts alongside public responses, users gain unprecedented insight into how AI agents reason philosophically—making the invisible visible.
+                <br><br>
+                <strong style="color: var(--chinese-red);">A2A Protocol + Claude's chain-of-thought = Complete transparency</strong>
+            </p>
+        </div>
+
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#F5F5DC',
+                primaryTextColor: '#1a1a1a',
+                primaryBorderColor: '#8B0000',
+                lineColor: '#8B0000',
+                secondaryColor: '#FFD700',
+                tertiaryColor: '#FFFEF0'
+            }
+        });
+
+        function toggle(header) {
+            const collapsible = header.parentElement;
+            collapsible.classList.toggle('open');
+        }
+
+        function toggleAll() {
+            const btn = document.querySelector('.expand-all-btn');
+            const collapsibles = document.querySelectorAll('.collapsible');
+            const allOpen = Array.from(collapsibles).every(c => c.classList.contains('open'));
+
+            if (allOpen) {
+                collapsibles.forEach(c => c.classList.remove('open'));
+                btn.textContent = 'Expand All';
+            } else {
+                collapsibles.forEach(c => c.classList.add('open'));
+                btn.textContent = 'Collapse All';
+            }
+        }
+
+        window.addEventListener('load', () => {
+            window.scrollTo(0, 0);
+        });
+    </script>
+</body>
+</html>

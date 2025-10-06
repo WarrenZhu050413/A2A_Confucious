@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Confucian Café Prompt Engineering Overview</title>
+<style>
+:root {
+    --chinese-red:#8B0000;
+    --chinese-gold:#FFD700;
+    --paper-beige:#F5F5DC;
+    --light-cream:#FFFEF0;
+    --ink-black:#1a1a1a;
+    --level-1:#8B0000;
+    --level-2:#CD5C5C;
+    --level-3:#666;
+    --level-4:#999;
+    --critical:#C62828;
+    --important:#B8860B;
+    --muted:#777;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+    background:linear-gradient(135deg,var(--paper-beige)0%,var(--light-cream)100%);
+    color:var(--ink-black);
+    margin:0;
+    padding:0;
+    width:100vw;
+    max-width:100%;
+    line-height:1.2;
+    font-size:14px;
+    font-family:-apple-system,BlinkMacSystemFont,'SF Pro','Segoe UI',Roboto,Arial,sans-serif;
+}
+.container{width:100%;padding:0;margin:0;}
+h1{
+    font-size:24px;
+    font-weight:900;
+    margin:4px 0;
+    padding:6px 4px;
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    -webkit-background-clip:text;
+    -webkit-text-fill-color:transparent;
+    letter-spacing:-0.5px;
+}
+h2{
+    font-size:18px;
+    font-weight:700;
+    margin:8px 0 4px 0;
+    padding:4px;
+    border-left:4px solid var(--chinese-red);
+    background:rgba(139,0,0,0.03);
+    color:var(--level-1);
+}
+h3{
+    font-size:14px;
+    font-weight:600;
+    margin:4px 0 2px 8px;
+    color:var(--level-2);
+    text-transform:uppercase;
+    letter-spacing:0.5px;
+}
+h4{
+    font-size:12px;
+    font-weight:500;
+    margin:2px 0 1px 16px;
+    color:var(--level-3);
+}
+h5,h6{
+    font-size:11px;
+    font-weight:500;
+    margin:1px 0 1px 24px;
+    color:var(--level-4);
+}
+button,.button{
+    background:linear-gradient(135deg,var(--chinese-red),#CD5C5C);
+    color:white;
+    border:1px solid rgba(255,215,0,0.3);
+    transition:all 0.2s ease;
+    padding:4px 10px;
+    margin:2px;
+    font-size:12px;
+    border-radius:2px;
+    cursor:pointer;
+    font-weight:600;
+}
+button:hover{transform:translateY(-1px);box-shadow:0 1px 4px rgba(139,0,0,0.3);}
+.two-column-layout{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:8px;
+    padding:4px;
+}
+.full-width{grid-column:1 / -1;}
+.collapsible{
+    border:1px solid rgba(139,0,0,0.12);
+    background:white;
+}
+.collapsible-header{
+    cursor:pointer;
+    padding:6px 10px;
+    background:linear-gradient(135deg,rgba(139,0,0,0.08),rgba(255,215,0,0.05));
+    border-left:3px solid var(--chinese-gold);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-weight:600;
+    font-size:13px;
+    color:var(--level-2);
+}
+.collapsible-header .arrow{transition:transform 0.3s ease;font-size:11px;color:var(--chinese-red);}
+.collapsible.open .collapsible-header .arrow{transform:rotate(90deg);}
+.collapsible-content{
+    max-height:0;
+    overflow:hidden;
+    transition:max-height 0.3s ease;
+    padding:0 10px;
+}
+.collapsible.open .collapsible-content{
+    max-height:1800px;
+    padding:6px 10px 8px 10px;
+}
+.dense-list{list-style:none;padding:0;margin:0;}
+.dense-list li{padding:2px 0 2px 14px;border-left:2px solid transparent;position:relative;line-height:1.2;}
+.dense-list li:before{content:"▸";position:absolute;left:0;color:var(--chinese-red);font-size:10px;}
+.dense-list li strong{color:var(--level-2);font-weight:600;}
+.badge{display:inline-block;padding:1px 6px;border-radius:999px;font-size:10px;font-weight:600;background:rgba(139,0,0,0.14);color:var(--level-1);}
+.tag{display:inline-block;background:rgba(255,215,0,0.2);border:1px solid rgba(139,0,0,0.2);border-radius:999px;padding:1px 6px;font-size:10px;margin-right:4px;color:var(--level-2);}
+.important-always-visible{
+    background:linear-gradient(135deg,rgba(255,215,0,0.18),white);
+    border:2px solid var(--chinese-gold);
+    padding:8px;
+    margin:4px;
+    box-shadow:0 1px 4px rgba(139,0,0,0.16);
+}
+.grid{display:grid;gap:6px;}
+.highlight{color:var(--critical);font-weight:700;}
+.muted{color:var(--muted);}
+.code{font-family:'SF Mono','Menlo','Consolas',monospace;background:rgba(0,0,0,0.05);padding:2px 4px;border-radius:2px;font-size:12px;}
+table{width:100%;border-collapse:collapse;font-size:12px;margin:4px 0;background:white;}
+th,td{border:1px solid rgba(139,0,0,0.15);padding:4px 6px;text-align:left;}
+th{background:rgba(139,0,0,0.08);color:var(--level-1);font-weight:700;}
+</style>
+</head>
+<body>
+<div class="container">
+<header>
+<h1>Confucian Café · Prompt Engineering Skeleton</h1>
+<div style="text-align:right;margin:4px 4px 0 0;">
+<button id="expand-all">Expand All</button>
+<button id="collapse-all">Collapse All</button>
+</div>
+</header>
+<section class="important-always-visible">
+<h2>🎯 Critical Alignment Snapshot</h2>
+<div class="two-column-layout">
+<ul class="dense-list">
+<li><strong>Goal:</strong> Split model thinking from surface replies with JSON contract.</li>
+<li><strong>Persona Source:</strong> Agent-card fields feed each system prompt.</li>
+<li><strong>Moderator Role:</strong> Routes user intent, injects peer context, enforces schema.</li>
+</ul>
+<ul class="dense-list">
+<li><strong>UI Expectation:</strong> Always English surface; translations/insights optional per toggle.</li>
+<li><strong>Safety:</strong> Strip duplicated insight text before publishing to stream.</li>
+</ul>
+</div>
+</section>
+<main class="two-column-layout">
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>⚙️ Prompt Stack Blueprint</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<h3>System Layer</h3>
+<ul class="dense-list">
+<li><strong>Confucius:</strong> Virtue ethics, ritual order, five relationships, ≤200w surface.</li>
+<li><strong>Lao Tse:</strong> Dao, wu wei metaphors, paradoxical cadence, advocate soft governance.</li>
+<li><strong>Mozi:</strong> Consequential audits, impartial care, Heaven’s will legitimacy.</li>
+</ul>
+<h3>Round Directive</h3>
+<ul class="dense-list">
+<li><strong>Initial:</strong> “Share position on {topic}; respect persona canon; return schema.”</li>
+<li><strong>Critique:</strong> Prepend quoted peer surface text in `context`; ask for fault analysis.</li>
+<li><strong>Synthesis:</strong> Provide numbered prior stances; require blend or mediation.</li>
+</ul>
+<h3>Format Guard</h3>
+<ul class="dense-list">
+<li><strong>Output:</strong> `{ "surface": str, "translations": {"modern"|"classical"}, "insight": str, "citations": [] }`.</li>
+<li><strong>Validation:</strong> Moderator drops response if `surface` repeats `insight` verbatim.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible" data-collapsible="closed">
+<div class="collapsible-header"><span>📊 Persona & Skill Mapping</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<h3>Agent Cards → Prompts</h3>
+<table>
+<thead><tr><th>Philosopher</th><th>Key Fields</th><th>Prompt Nudges</th></tr></thead>
+<tbody>
+<tr><td>Confucius</td><td><span class="tag">ren</span><span class="tag">li</span><span class="tag">junzi</span></td><td>Cite Zhou exemplars; stress hierarchy & dutiful roles.</td></tr>
+<tr><td>Lao Tse</td><td><span class="tag">Dao</span><span class="tag">wu wei</span><span class="tag">ziran</span></td><td>Prefer imagery (“water, valley”); recommend softness, non-imposition.</td></tr>
+<tr><td>Mozi</td><td><span class="tag">jian ai</span><span class="tag">li (benefit)</span><span class="tag">tian zhi</span></td><td>Produce step plans; contrast ritual cost vs. utility gains.</td></tr>
+</tbody>
+</table>
+<h3>Skill Invocation</h3>
+<ul class="dense-list">
+<li><strong>share_position:</strong> Default for user broadcast; expects concise surface + optional bilingual layers.</li>
+<li><strong>critique_argument:</strong> Moderator routes with `target` metadata; insight should note failure modes.</li>
+<li><strong>find_synthesis:</strong> Encourage bridging vocabulary, e.g., Confucian rites as Mozi checklists.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="open">
+<div class="collapsible-header"><span>🔁 Message Flow & UI Contract</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<div class="two-column-layout">
+<div>
+<h3>Inbound Path</h3>
+<ul class="dense-list">
+<li><strong>User Prompt:</strong> `PromptComposer` sets `audience` = `all` or philosopher id.</li>
+<li><strong>Moderator:</strong> Builds round-specific instruction, attaches `context` array of prior surfaces.</li>
+<li><strong>Philosopher:</strong> Persona prompt + directive + schema request → structured reply.</li>
+</ul>
+</div>
+<div>
+<h3>Outbound Path</h3>
+<ul class="dense-list">
+<li><strong>Parser:</strong> Validate JSON → push `message` (surface) to stream.</li>
+<li><strong>Translations:</strong> Emit separate `translation` events when keys present and toggles allow.</li>
+<li><strong>Insights:</strong> Publish only if roster `showThoughts` true and user hasn’t disabled reasoning.</li>
+</ul>
+</div>
+</div>
+<h3>Safeguards</h3>
+<ul class="dense-list">
+<li><strong>Duplication Filter:</strong> Reject outputs where `surface` shares ≥80% tokens with `insight`.</li>
+<li><strong>Fallback:</strong> If JSON invalid, re-ask philosopher with error note in metadata.</li>
+<li><strong>Audit Trail:</strong> Moderator logs raw reply + cleaned events for later review.</li>
+</ul>
+</div>
+</div>
+<div class="collapsible full-width" data-collapsible="closed">
+<div class="collapsible-header"><span>🧪 Operational Checklist</span><span class="arrow">▶</span></div>
+<div class="collapsible-content">
+<ul class="dense-list">
+<li><strong>Schema Test:</strong> Unit harness feeds canned prompts, asserts presence of all keys.</li>
+<li><strong>Toggle Test:</strong> Simulate `showInsights=false`; ensure insights withheld without schema error.</li>
+<li><strong>Round Trip:</strong> Run dialogue sample; confirm phases (introduce → cross-response → synthesis) timeline matches stream.</li>
+<li><strong>Logging:</strong> Store moderator decisions (publish/drop) with cause for debugging.</li>
+</ul>
+</div>
+</div>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded',function(){
+    document.querySelectorAll('[data-collapsible]').forEach(function(section){
+        const isOpen=section.getAttribute('data-collapsible')==='open';
+        section.classList.add('collapsible');
+        if(isOpen) section.classList.add('open');
+    });
+    document.querySelectorAll('.collapsible-header').forEach(function(header){
+        header.addEventListener('click',function(){
+            const collapsible=this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+    const expandAllBtn=document.getElementById('expand-all');
+    const collapseAllBtn=document.getElementById('collapse-all');
+    if(expandAllBtn){
+        expandAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.add('open');});
+        });
+    }
+    if(collapseAllBtn){
+        collapseAllBtn.addEventListener('click',function(){
+            document.querySelectorAll('.collapsible').forEach(function(c){c.classList.remove('open');});
+        });
+    }
+});
+</script>
+</body>
+</html>
