@@ -48,4 +48,5 @@ The dev server proxies `/api` and `/health` to the backend so moderator prompts 
 - Persona templates can be extended or new philosophers added via the “Add participant” form in the roster controls.
 
 ## Documentation
-Comprehensive architecture notes and diagrams live in [`docs/architecture.md`](docs/architecture.md).
+- Architecture overview: [`docs/architecture.md`](docs/architecture.md)
+- Comprehensive test plan: [`docs/test-plan.md`](docs/test-plan.md)
