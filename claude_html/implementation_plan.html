@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation Plan: UI Improvements & Web-Search Integration</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1e40af;
+            --secondary: #7c3aed;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-50: #f9fafb;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-300: #d1d5db;
+            --gray-700: #374151;
+            --gray-800: #1f2937;
+            --gray-900: #111827;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-800);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 3rem 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 800;
+        }
+
+        header .subtitle {
+            font-size: 1.125rem;
+            opacity: 0.95;
+            font-weight: 300;
+        }
+
+        .meta-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            padding: 1.5rem 2rem;
+            background: var(--gray-50);
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .meta-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .meta-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--gray-700);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .meta-value {
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--gray-900);
+        }
+
+        .content {
+            padding: 2rem;
+        }
+
+        section {
+            margin-bottom: 3rem;
+        }
+
+        section h2 {
+            font-size: 1.875rem;
+            color: var(--primary-dark);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 3px solid var(--primary);
+            font-weight: 700;
+        }
+
+        section h3 {
+            font-size: 1.5rem;
+            color: var(--secondary);
+            margin: 1.5rem 0 1rem;
+            font-weight: 600;
+        }
+
+        section h4 {
+            font-size: 1.25rem;
+            color: var(--gray-700);
+            margin: 1.25rem 0 0.75rem;
+            font-weight: 600;
+        }
+
+        .learning-objectives {
+            background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+            border-left: 4px solid var(--warning);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 2rem;
+        }
+
+        .learning-objectives h3 {
+            color: #92400e;
+            margin-top: 0;
+        }
+
+        .objectives-grid {
+            display: grid;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .objective-category {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .objective-category strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .concept-card {
+            background: var(--gray-50);
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .concept-card h4 {
+            margin-top: 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .concept-card .icon {
+            font-size: 1.5rem;
+        }
+
+        .concept-card .definition {
+            background: white;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.75rem 0;
+            border-left: 3px solid var(--primary);
+        }
+
+        .concept-card .analogy {
+            background: #dbeafe;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.75rem 0;
+            font-style: italic;
+        }
+
+        .architecture-diagram {
+            background: var(--gray-900);
+            color: #10b981;
+            padding: 2rem;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+
+        .step-list {
+            counter-reset: step-counter;
+            list-style: none;
+            padding: 0;
+        }
+
+        .step-item {
+            counter-increment: step-counter;
+            background: white;
+            border: 2px solid var(--gray-200);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            position: relative;
+            padding-left: 5rem;
+            transition: all 0.3s ease;
+        }
+
+        .step-item:hover {
+            border-color: var(--primary);
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.15);
+        }
+
+        .step-item::before {
+            content: counter(step-counter);
+            position: absolute;
+            left: 1.5rem;
+            top: 1.5rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            width: 2.5rem;
+            height: 2.5rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.25rem;
+        }
+
+        .step-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 0.75rem;
+        }
+
+        .step-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--gray-900);
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-easy {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge-medium {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge-advanced {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .step-description {
+            color: var(--gray-700);
+            margin-bottom: 0.75rem;
+        }
+
+        .step-rationale {
+            background: #ede9fe;
+            border-left: 3px solid var(--secondary);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin: 0.75rem 0;
+            font-size: 0.875rem;
+        }
+
+        .step-rationale strong {
+            color: var(--secondary);
+        }
+
+        .step-verification {
+            background: #d1fae5;
+            border-left: 3px solid var(--success);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+        }
+
+        .step-verification strong {
+            color: var(--success);
+        }
+
+        .warning-box {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.75rem 0;
+        }
+
+        .warning-box strong {
+            color: #92400e;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .pitfall {
+            background: #fee2e2;
+            border-left: 4px solid var(--danger);
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 0.75rem 0;
+        }
+
+        .pitfall strong {
+            color: #991b1b;
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .code-ref {
+            background: var(--gray-100);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875em;
+            color: var(--secondary);
+        }
+
+        .file-path {
+            background: var(--gray-900);
+            color: #10b981;
+            padding: 0.125rem 0.5rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875em;
+        }
+
+        .concept-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: var(--primary-dark);
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        code {
+            background: var(--gray-100);
+            padding: 0.125rem 0.375rem;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875em;
+        }
+
+        pre {
+            background: var(--gray-900);
+            color: #10b981;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        .collapsible {
+            margin: 1rem 0;
+        }
+
+        details {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        summary {
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--primary);
+            user-select: none;
+            margin: -1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        summary:hover {
+            background: var(--gray-100);
+        }
+
+        details[open] summary {
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--gray-200);
+        }
+
+        .success-criteria {
+            background: #ecfdf5;
+            border: 2px solid #10b981;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1rem 0;
+        }
+
+        .success-criteria h4 {
+            color: #065f46;
+            margin-top: 0;
+        }
+
+        .success-criteria ul {
+            margin-left: 1.5rem;
+        }
+
+        .dependency-note {
+            background: #fef3c7;
+            border-left: 4px solid var(--warning);
+            padding: 0.75rem;
+            border-radius: 4px;
+            margin: 0.75rem 0;
+            font-size: 0.875rem;
+        }
+
+        .dependency-note strong {
+            color: #92400e;
+        }
+
+        footer {
+            background: var(--gray-800);
+            color: white;
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th {
+            background: var(--primary);
+            color: white;
+            padding: 0.75rem;
+            text-align: left;
+            font-weight: 600;
+        }
+
+        td {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background: var(--gray-50);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Implementation Plan</h1>
+            <p class="subtitle">UI Improvements & Web-Search Integration for Confucian Café</p>
+        </header>
+
+        <div class="meta-info">
+            <div class="meta-item">
+                <span class="meta-label">Project</span>
+                <span class="meta-value">A2A Confucian Dialogue</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Date Created</span>
+                <span class="meta-value">2025-10-09</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Complexity</span>
+                <span class="meta-value">Medium-High</span>
+            </div>
+            <div class="meta-item">
+                <span class="meta-label">Estimated Time</span>
+                <span class="meta-value">4-6 hours</span>
+            </div>
+        </div>
+
+        <div class="content">
+            <!-- LEARNING OBJECTIVES -->
+            <section class="learning-objectives">
+                <h3>📚 What You'll Learn</h3>
+                <div class="objectives-grid">
+                    <div class="objective-category">
+                        <strong>Core Concepts</strong>
+                        <ul>
+                            <li>Sequential dialogue management with queueing</li>
+                            <li>Dynamic topic configuration patterns</li>
+                            <li>Rectangle-based UI design (vs rounded pill UI)</li>
+                            <li>Web search integration for AI agents</li>
+                        </ul>
+                    </div>
+                    <div class="objective-category">
+                        <strong>Design Patterns</strong>
+                        <ul>
+                            <li>State-driven UI rendering</li>
+                            <li>Message queue processing with turn-taking</li>
+                            <li>API integration for external data sources</li>
+                            <li>Responsive addressing in multi-agent systems</li>
+                        </ul>
+                    </div>
+                    <div class="objective-category">
+                        <strong>Technologies/Tools</strong>
+                        <ul>
+                            <li>React state management (useState, useRef)</li>
+                            <li>TypeScript type definitions</li>
+                            <li>Exa AI web search API</li>
+                            <li>CSS custom properties and grid layouts</li>
+                        </ul>
+                    </div>
+                    <div class="objective-category">
+                        <strong>Skills</strong>
+                        <ul>
+                            <li>Implement turn-based conversation systems</li>
+                            <li>Integrate third-party APIs for agent enhancement</li>
+                            <li>Design accessible, rectangular UI components</li>
+                            <li>Manage complex async operations in React</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <!-- BACKGROUND & KEY CONCEPTS -->
+            <section>
+                <h2>🎓 Background & Key Concepts</h2>
+
+                <div class="concept-card">
+                    <h4><span class="icon">💬</span> Sequential Dialogue Management</h4>
+                    <div class="definition">
+                        <strong>What it is:</strong> A conversation system where only one participant speaks at a time, and responses address all previously queued messages in sequence.
+                    </div>
+                    <div class="analogy">
+                        <strong>Think of it as:</strong> A formal debate where each speaker waits their turn and responds to all points raised by previous speakers before yielding the floor.
+                    </div>
+                    <div>
+                        <strong>Why we use it:</strong> Prevents dialogue chaos in multi-agent systems. Instead of parallel cross-talk, agents take turns responding comprehensively, creating natural, coherent conversations.
+                    </div>
+                    <div>
+                        <strong>How it works here:</strong> When a message arrives, it's added to a queue for each recipient. The queue is processed one at a time, and when an agent responds, they address ALL queued messages together.
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <h4><span class="icon">🔍</span> Web Search Integration for AI Agents</h4>
+                    <div class="definition">
+                        <strong>What it is:</strong> Augmenting AI responses with real-time web search to find accurate quotes and citations from authoritative sources.
+                    </div>
+                    <div class="analogy">
+                        <strong>Think of it as:</strong> Giving your AI agent a library card—before responding, they can look up primary sources to ground their answers in real text.
+                    </div>
+                    <div>
+                        <strong>Why we use it:</strong> Philosophical dialogues benefit from exact quotes. Instead of paraphrasing, agents can cite classical Chinese texts with pinpoint accuracy using Exa's semantic search.
+                    </div>
+                    <div>
+                        <strong>Implementation approach:</strong> Before generating a response, query Exa for relevant Chinese philosophical texts. Extract quotes, then construct response using both the quote (in Chinese) and English explanation.
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <h4><span class="icon">🎨</span> Rectangle-Based UI Design</h4>
+                    <div class="definition">
+                        <strong>What it is:</strong> UI components using rectangular shapes with moderate border-radius (0-8px) instead of pill-shaped buttons (border-radius: 999px).
+                    </div>
+                    <div class="analogy">
+                        <strong>Think of it as:</strong> Traditional vs. modern design—rectangular elements feel more formal, structured, and professional (like a document) vs rounded pills that feel playful and modern (like a messaging app).
+                    </div>
+                    <div>
+                        <strong>Why the change:</strong> The current rounded UI doesn't match the formal, scholarly nature of Confucian dialogue. Rectangle-based UI provides better visual hierarchy and feels more appropriate for academic content.
+                    </div>
+                    <div>
+                        <strong>CSS changes:</strong> Modify <code>border-radius</code> from <code>999px</code> → <code>6px</code> for pills, cards, and buttons. Update shadows and borders to complement the sharper aesthetic.
+                    </div>
+                </div>
+
+                <div class="concept-card">
+                    <h4><span class="icon">⚙️</span> Dynamic Topic Configuration</h4>
+                    <div class="definition">
+                        <strong>What it is:</strong> Allowing users to set the dialogue topic and date at runtime instead of hardcoding values.
+                    </div>
+                    <div class="analogy">
+                        <strong>Think of it as:</strong> Like a meeting room that's configured for today's agenda instead of having yesterday's topic written on the whiteboard permanently.
+                    </div>
+                    <div>
+                        <strong>Why we need it:</strong> Different discussions require different topics. Hardcoding "Water Control Ethics" limits flexibility. Users should define the topic per session.
+                    </div>
+                    <div>
+                        <strong>Implementation:</strong> Replace hardcoded topic string with state variable. Add input field in UI. Use JavaScript <code>Date.now()</code> for automatic date setting.
+                    </div>
+                </div>
+
+                <h3>🏗️ How This Works (Architecture Overview)</h3>
+
+                <div class="architecture-diagram">
+┌─────────────────────────────────────────────────────────────────────┐
+│                          USER INTERFACE                              │
+│  ┌────────────────┐  ┌──────────────────┐  ┌────────────────────┐  │
+│  │  Topic Input   │  │ Rectangle-based  │  │  Dialogue Stream   │  │
+│  │  (New!)        │  │ Side Panel UI    │  │  (Sequential)      │  │
+│  └────────────────┘  └──────────────────┘  └────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────┘
+                                  ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                      STATE MANAGEMENT (React)                        │
+│  • topic (user-defined string)                                       │
+│  • date (auto-generated from system)                                 │
+│  • messages[] (sequential, turn-based)                               │
+│  • responseQueue{} (per philosopher, FIFO)                           │
+└─────────────────────────────────────────────────────────────────────┘
+                                  ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                    DIALOGUE ENGINE (Modified)                        │
+│                                                                       │
+│  1. Message arrives → Queue for recipient                            │
+│  2. Check: Is recipient processing? → If yes, wait                   │
+│  3. If no → Process ALL queued messages together                     │
+│  4. Before responding → Search Exa for quotes                        │
+│  5. Generate response addressing ALL queued messages                 │
+│  6. Emit response → Queue for OTHER participants                     │
+│                                                                       │
+└─────────────────────────────────────────────────────────────────────┘
+                                  ↓
+┌─────────────────────────────────────────────────────────────────────┐
+│                      EXTERNAL SERVICES                               │
+│  ┌────────────────────────┐  ┌─────────────────────────────────┐   │
+│  │   Exa Web Search       │  │   Claude API                     │   │
+│  │   (New Integration!)   │  │   (Existing)                     │   │
+│  │   - Find quotes        │  │   - Generate responses           │   │
+│  │   - Chinese texts      │  │   - Philosophy reasoning         │   │
+│  └────────────────────────┘  └─────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────┘
+                </div>
+
+                <h4>Data Flow</h4>
+                <ol>
+                    <li><strong>User sets topic:</strong> Input field updates state → Topic displayed in dialogue header</li>
+                    <li><strong>User sends message:</strong> Message queued for all selected recipients</li>
+                    <li><strong>Agent turn starts:</strong> Check if agent is busy → If free, dequeue ALL messages for that agent</li>
+                    <li><strong>Web search phase:</strong> Query Exa for relevant Chinese philosophical quotes matching the topic + agent's persona</li>
+                    <li><strong>Response generation:</strong> Claude generates response addressing ALL queued messages, incorporating Exa quote</li>
+                    <li><strong>Response broadcast:</strong> Response queued for mentioned participants + original senders</li>
+                    <li><strong>Next turn:</strong> Process next agent's queue (sequential, not parallel)</li>
+                </ol>
+
+                <h4>State Management</h4>
+                <ul>
+                    <li><strong>Source of Truth:</strong> React state (<code>messages[]</code>, <code>responseQueue{}</code>, <code>topic</code>)</li>
+                    <li><strong>Queue State:</strong> Managed via <code>useRef</code> to prevent re-renders during processing</li>
+                    <li><strong>Processing Lock:</strong> <code>processingRef.current[philosopherId]</code> prevents concurrent responses from same agent</li>
+                    <li><strong>Sequential Enforcement:</strong> Only one agent processes at a time (global or per-agent, configurable)</li>
+                </ul>
+            </section>
+
+            <!-- EXECUTIVE SUMMARY -->
+            <section>
+                <h2>📋 Executive Summary</h2>
+                <p>This implementation plan transforms the Confucian Café dialogue system from a parallel, topic-fixed application into a sequential, user-configurable platform with web-search-enhanced agents.</p>
+
+                <h3>Key Changes</h3>
+                <ol>
+                    <li><strong>Remove Chinese language integration:</strong> Simplify to English-only responses (remove Modern/Classical Chinese toggles)</li>
+                    <li><strong>User-defined topics:</strong> Replace hardcoded "Water Control Ethics" with dynamic input field</li>
+                    <li><strong>Auto-generated dates:</strong> Use system date instead of static ISO string</li>
+                    <li><strong>Rectangle-based UI:</strong> Redesign side panel (Roster, Controls, Events) with rectangular components instead of rounded pills</li>
+                    <li><strong>Sequential dialogue:</strong> Implement turn-based speaking where agents respond to ALL queued messages at once</li>
+                    <li><strong>Web-search integration:</strong> Add Exa API calls to fetch authentic Chinese quotes before generating responses</li>
+                </ol>
+
+                <h3>High-Level Approach</h3>
+                <p>We'll modify the existing React application in phases:</p>
+                <ul>
+                    <li><strong>Phase 1:</strong> Simplify (remove Chinese toggles, clean up UI)</li>
+                    <li><strong>Phase 2:</strong> Enhance configuration (add topic input, auto-date)</li>
+                    <li><strong>Phase 3:</strong> Redesign UI (rectangle-based styling)</li>
+                    <li><strong>Phase 4:</strong> Implement sequential dialogue (modify queue processing)</li>
+                    <li><strong>Phase 5:</strong> Integrate web search (Exa API for quotes)</li>
+                </ul>
+
+                <h3>Estimated Complexity</h3>
+                <p><strong>Medium-High:</strong> Requires architectural changes to queue processing (sequential turn-taking) and integration with external API (Exa). UI changes are straightforward but numerous. Estimated 4-6 hours for complete implementation and testing.</p>
+            </section>
+
+            <!-- PREREQUISITES & CONTEXT -->
+            <section>
+                <h2>🔍 Prerequisites & Context</h2>
+
+                <h3>Files to Examine</h3>
+                <ul>
+                    <li><span class="file-path">src/App.tsx</span> - Main application logic, queue processing, message handling</li>
+                    <li><span class="file-path">src/types.ts</span> - Type definitions for messages, philosophers, etc.</li>
+                    <li><span class="file-path">src/styles/app.css</span> - Current styling (rounded UI to be modified)</li>
+                    <li><span class="file-path">src/lib/api.ts</span> - Backend API integration (to be extended for Exa)</li>
+                    <li><span class="file-path">src/data/mockData.ts</span> - Sample data and initial configurations</li>
+                </ul>
+
+                <h3>Existing Patterns to Understand</h3>
+                <ul>
+                    <li><strong>Queue Processing:</strong> Currently uses parallel processing via <code>runQueue(philosopherId)</code> - allows multiple agents to respond simultaneously</li>
+                    <li><strong>Message Flow:</strong> <code>enqueueResponsesFromMessage()</code> creates tasks for recipients, then <code>drainQueues()</code> starts processing</li>
+                    <li><strong>State Refs:</strong> Uses <code>useRef</code> for <code>queuesRef</code>, <code>processingRef</code>, <code>memoriesRef</code> to avoid re-render cycles</li>
+                    <li><strong>Language System:</strong> Currently has toggles for Modern/Classical Chinese—we'll remove these</li>
+                </ul>
+
+                <h3>Dependencies & External Services</h3>
+                <ul>
+                    <li><strong>Exa AI:</strong> MCP server already available as <code>mcp__exa__*</code> tools. We'll use <code>mcp__exa__web_search_exa</code> for finding quotes.</li>
+                    <li><strong>Claude API:</strong> Existing backend at <code>/api/message</code> - no changes needed</li>
+                    <li><strong>React 18:</strong> Already installed, using hooks extensively</li>
+                </ul>
+
+                <h3>Blockers & Assumptions</h3>
+                <div class="warning-box">
+                    <strong>⚠️ Assumption: Exa API Access</strong>
+                    <p>We assume the MCP Exa server is configured and accessible. If not, web-search feature will need to be mocked or use alternative API.</p>
+                </div>
+
+                <div class="warning-box">
+                    <strong>⚠️ Assumption: Sequential Processing Goal</strong>
+                    <p>The plan assumes "only one person speaks at a time" means globally one-at-a-time (not per-agent). If user wants per-agent queuing with global parallelism, we'll need to clarify requirements.</p>
+                </div>
+            </section>
+
+            <!-- STEP-BY-STEP IMPLEMENTATION -->
+            <section>
+                <h2>🚀 Step-by-Step Implementation</h2>
+
+                <ol class="step-list">
+                    <!-- STEP 1 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Remove Modern & Classical Chinese Integration</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Remove all references to Modern and Classical Chinese language toggles, simplifying the application to English-only responses.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Simplifies UI and reduces cognitive load. User explicitly requested removal to focus on core dialogue functionality.
+                        </div>
+
+                        <div>
+                            <strong>Files to modify:</strong>
+                            <ul>
+                                <li><span class="file-path">src/App.tsx</span> - Remove language default state, toggle handlers, and UI components</li>
+                                <li><span class="file-path">src/types.ts</span> - Simplify <code>TranslationMap</code> to only include <code>english</code></li>
+                                <li><span class="file-path">src/data/mockData.ts</span> - Remove Modern/Classical from mock messages</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <strong>Specific changes:</strong>
+                            <ul>
+                                <li>Remove <code>LanguageChips</code> component (lines 597-621)</li>
+                                <li>Remove language toggle from <code>HeaderBand</code> props</li>
+                                <li>Remove "Show Modern Chinese" / "Show Classical" buttons from <code>MessageCard</code> (lines 994-1011)</li>
+                                <li>Remove <code>languageDefaults</code> state and related functions</li>
+                                <li>Update <code>TranslationMap</code> type to: <code>{ english: string }</code></li>
+                            </ul>
+                        </div>
+
+                        <div class="pitfall">
+                            <strong>⚠️ Common Pitfall:</strong> Don't forget to remove language-related props from component signatures. TypeScript will help catch these, but be thorough.
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> UI no longer shows Modern/Classical toggle buttons. No TypeScript errors. Message cards only display English text.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Refactoring</span>
+                            <span class="concept-tag">State Management</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 2 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Add User-Defined Topic Input</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Replace hardcoded "Water Control Ethics" topic with a user-configurable input field, allowing dynamic topic setting per dialogue session.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Hardcoded topics limit reusability. Dynamic topics allow the same app to discuss different philosophical questions.
+                        </div>
+
+                        <div>
+                            <strong>Implementation steps:</strong>
+                            <ol>
+                                <li>Add state: <code>const [topic, setTopic] = useState<string>('');</code></li>
+                                <li>Create <code>TopicInput</code> component in Controls tab or as header element</li>
+                                <li>Replace hardcoded topic in <code>DialogueStream</code> (line 526) with state variable</li>
+                                <li>Include topic in context assembly when generating prompts</li>
+                            </ol>
+                        </div>
+
+                        <div>
+                            <strong>UI placement options:</strong>
+                            <ul>
+                                <li><strong>Option A:</strong> Add to Controls tab in side panel (alongside existing controls)</li>
+                                <li><strong>Option B:</strong> Add to dialogue header (more prominent, always visible)</li>
+                                <li><strong>Recommendation:</strong> Option A - keeps dialogue area clean, groups with other settings</li>
+                            </ul>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Input field appears in UI. Typing updates topic in dialogue header. Topic persists across user messages.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Dynamic Configuration</span>
+                            <span class="concept-tag">User Input</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 3 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Auto-Generate Date from System</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Replace hardcoded ISO date string with auto-generated date from system time, ensuring dialogue timestamp reflects current session.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Hardcoded dates (2025-10-06) quickly become stale and confusing. Auto-generation ensures accuracy and reduces maintenance.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>In <code>DialogueStream</code>, replace: <code>date={formatDate('2025-10-06T00:00:00Z')}</code></li>
+                                <li>With: <code>date={formatDate(new Date().toISOString())}</code></li>
+                                <li>Alternatively, generate once on component mount for session consistency</li>
+                            </ol>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>💡 Design Decision:</strong> Should date update every render or be fixed per session?
+                            <p><strong>Recommendation:</strong> Fix on component mount using <code>useState(() => new Date().toISOString())</code> to represent "session start time".</p>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Dialogue header shows today's date. Refreshing page updates to current date.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Date Handling</span>
+                            <span class="concept-tag">Session State</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 4 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Redesign Side Panel UI (Rectangle-Based)</div>
+                            <span class="badge badge-medium">🟡 Medium</span>
+                        </div>
+                        <div class="step-description">
+                            Transform the side panel (Roster, Controls, Events tabs) from rounded pill-based UI to clean rectangle-based design.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Current rounded UI feels informal and playful. Rectangle-based design better matches the scholarly, formal nature of philosophical dialogue.
+                        </div>
+
+                        <div>
+                            <strong>CSS Changes (in <span class="file-path">src/styles/app.css</span>):</strong>
+                            <ol>
+                                <li><strong>Pills/Badges:</strong> Change <code>border-radius: 999px</code> → <code>border-radius: 6px</code></li>
+                                <li><strong>Cards:</strong> Change <code>border-radius: 8px</code> → <code>border-radius: 6px</code> (subtle)</li>
+                                <li><strong>Buttons:</strong> Change <code>border-radius: 999px</code> → <code>border-radius: 6px</code></li>
+                                <li><strong>Tab buttons:</strong> Remove <code>border-radius: 999px</code>, use <code>border-radius: 4px</code></li>
+                                <li><strong>Side panel container:</strong> Keep current <code>border-radius: 12px</code> (outer container can remain rounded)</li>
+                            </ol>
+                        </div>
+
+                        <div>
+                            <strong>Enhanced visual hierarchy:</strong>
+                            <ul>
+                                <li>Active tabs: Add bottom border (<code>border-bottom: 2px solid var(--primary)</code>) instead of background</li>
+                                <li>Active pills: Use border highlight instead of background change</li>
+                                <li>Queue chips: Rectangle with subtle border</li>
+                            </ul>
+                        </div>
+
+                        <div class="pitfall">
+                            <strong>⚠️ Common Pitfall:</strong> Changing all border-radius at once can look jarring. Iterate: start with buttons/pills, then cards, then review overall aesthetic.
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> All side panel elements use rectangular shapes. UI feels more structured and formal. No visual glitches or broken layouts.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">CSS Design</span>
+                            <span class="concept-tag">UI/UX</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 5 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Implement Global Processing Lock</div>
+                            <span class="badge badge-medium">🟡 Medium</span>
+                        </div>
+                        <div class="step-description">
+                            Add global lock to ensure only ONE philosopher speaks at a time across the entire system (not just per-philosopher locking).
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Current implementation allows multiple philosophers to respond in parallel. For sequential dialogue, we need global turn-taking.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>Add global ref: <code>const globallyProcessingRef = useRef<boolean>(false);</code></li>
+                                <li>Modify <code>runQueue</code> function to check global lock:
+<pre>async function runQueue(philosopherId: string): Promise<void> {
+  if (isPausedRef.current) return;
+  if (globallyProcessingRef.current) return; // NEW: global lock
+  if (processingRef.current[philosopherId]) return;
+
+  const queue = queuesRef.current[philosopherId];
+  if (!queue || queue.length === 0) return;
+
+  const task = queue.shift();
+  updateQueueDepths();
+  if (!task) return;
+
+  globallyProcessingRef.current = true; // NEW: acquire global lock
+  processingRef.current[philosopherId] = true;
+  try {
+    await processTask(task);
+  } finally {
+    processingRef.current[philosopherId] = false;
+    globallyProcessingRef.current = false; // NEW: release global lock
+    drainQueues(); // NEW: trigger next speaker
+  }
+}</pre>
+                                </li>
+                                <li>Modify <code>drainQueues</code> to process only FIRST available agent with messages</li>
+                            </ol>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>💡 Design Decision:</strong> Should we process ALL queued messages for one agent before moving to next, or one message at a time?
+                            <p><strong>Recommendation:</strong> Process ALL queued messages for current speaker (as requested: "address all queued previous responses").</p>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Only one philosopher responds at a time. Check browser console logs show sequential processing. No race conditions.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Concurrency Control</span>
+                            <span class="concept-tag">Sequential Processing</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 6 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Modify Queue Processing for Batch Responses</div>
+                            <span class="badge badge-advanced">🔴 Advanced</span>
+                        </div>
+                        <div class="step-description">
+                            Change queue processing so when an agent's turn starts, they dequeue ALL messages and respond to them together in a single comprehensive response.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> User requirement: "when someone responds, they address all the queued previous responses." This creates more natural, coherent dialogue.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>Modify <code>runQueue</code> to dequeue ALL tasks for the philosopher:
+<pre>async function runQueue(philosopherId: string): Promise<void> {
+  // ... lock checks ...
+
+  const queue = queuesRef.current[philosopherId];
+  if (!queue || queue.length === 0) return;
+
+  // NEW: Dequeue ALL tasks
+  const tasks = [...queue];
+  queuesRef.current[philosopherId] = [];
+  updateQueueDepths();
+
+  globallyProcessingRef.current = true;
+  processingRef.current[philosopherId] = true;
+  try {
+    await processBatchedTasks(tasks); // NEW: batch processing
+  } finally {
+    processingRef.current[philosopherId] = false;
+    globallyProcessingRef.current = false;
+    drainQueues();
+  }
+}</pre>
+                                </li>
+                                <li>Create <code>processBatchedTasks</code> function that:
+                                    <ul>
+                                        <li>Aggregates all trigger messages from tasks</li>
+                                        <li>Builds comprehensive context including ALL messages</li>
+                                        <li>Generates single response addressing all points</li>
+                                    </ul>
+                                </li>
+                                <li>Update prompt assembly to include all queued messages in context</li>
+                            </ol>
+                        </div>
+
+                        <div class="pitfall">
+                            <strong>⚠️ Common Pitfall:</strong> Watch for message de-duplication! If multiple tasks reference the same trigger message, don't include it multiple times in the prompt.
+                        </div>
+
+                        <div class="dependency-note">
+                            <strong>🔗 Dependency:</strong> This step depends on Step 5 (global lock) being completed first.
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Send 3 messages to Confucius. Verify Confucius responds ONCE addressing all 3 messages. Check prompt inspector shows all 3 messages in context.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Batch Processing</span>
+                            <span class="concept-tag">Context Assembly</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 7 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Add Exa Web Search Integration</div>
+                            <span class="badge badge-advanced">🔴 Advanced</span>
+                        </div>
+                        <div class="step-description">
+                            Integrate Exa AI web search to find authentic Chinese philosophical quotes before generating responses, enhancing accuracy and grounding responses in primary sources.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Philosophers should cite real texts. Exa's semantic search can find relevant quotes from classical Chinese texts, making responses more authentic and educational.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>Add Exa search function in <span class="file-path">src/lib/api.ts</span>:
+<pre>export async function searchPhilosophicalQuote(
+  philosopher: string,
+  topic: string
+): Promise<{ quote: string; source: string; english: string } | null> {
+  try {
+    const query = `${philosopher} quote about ${topic} classical Chinese text`;
+    const response = await fetch('/api/exa-search', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query, numResults: 3 })
+    });
+
+    if (!response.ok) return null;
+
+    const data = await response.json();
+    // Parse Exa results, extract quote
+    return extractQuote(data);
+  } catch (error) {
+    console.error('Exa search failed:', error);
+    return null;
+  }
+}</pre>
+                                </li>
+                                <li>Create backend endpoint <code>/api/exa-search</code> that calls MCP Exa tool</li>
+                                <li>Modify <code>processBatchedTasks</code> to call Exa before generating response:
+<pre>async function processBatchedTasks(tasks: ResponseTask[]) {
+  const philosopher = philosopherMap.get(tasks[0].philosopherId);
+  if (!philosopher) return;
+
+  // NEW: Search for quote
+  const quoteData = await searchPhilosophicalQuote(
+    philosopher.name,
+    topicRef.current // assume topic stored in ref
+  );
+
+  const context = assembleContextForPhilosopher(/* ... */);
+
+  // NEW: Include quote in prompt
+  const enhancedPrompt = quoteData
+    ? `${context.promptText}\n\nRelevant quote: ${quoteData.quote}\nSource: ${quoteData.source}`
+    : context.promptText;
+
+  const response = await sendMessageToBackend({
+    messages: [{ role: 'user', content: enhancedPrompt }]
+  });
+
+  // ... rest of processing
+}</pre>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>⚠️ Performance Consideration:</strong> Exa search adds latency (1-3s per search). Consider:
+                            <ul>
+                                <li>Caching quotes by topic + philosopher</li>
+                                <li>Parallel search + response generation (start both, wait for both)</li>
+                                <li>Fallback to no-quote if search times out</li>
+                            </ul>
+                        </div>
+
+                        <div class="pitfall">
+                            <strong>⚠️ Common Pitfall:</strong> Exa results may not always be in Chinese. Add validation to check for Chinese characters. If not found, skip quote or search with more specific query.
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Send message with topic "virtue". Check response includes Chinese quote with citation. Verify quote is relevant to philosopher's school.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">API Integration</span>
+                            <span class="concept-tag">External Data</span>
+                            <span class="concept-tag">Async Operations</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 8 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Create Backend Exa Proxy Endpoint</div>
+                            <span class="badge badge-medium">🟡 Medium</span>
+                        </div>
+                        <div class="step-description">
+                            Add backend endpoint that proxies requests to MCP Exa tool, handling authentication and response formatting.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Frontend cannot directly call MCP tools. Backend must proxy the request, ensuring secure API key handling.
+                        </div>
+
+                        <div>
+                            <strong>Implementation (backend code - conceptual):</strong>
+<pre>// Backend: server.ts or equivalent
+app.post('/api/exa-search', async (req, res) => {
+  const { query, numResults = 3 } = req.body;
+
+  try {
+    // Call MCP Exa tool (implementation depends on backend framework)
+    const results = await mcpClient.callTool('mcp__exa__web_search_exa', {
+      query,
+      numResults
+    });
+
+    res.json(results);
+  } catch (error) {
+    console.error('Exa search error:', error);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+</pre>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>💡 Note:</strong> Actual backend implementation depends on your server framework. If using Vite dev server, you may need to add a proxy in <code>vite.config.ts</code> or create a simple Express middleware.
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Test endpoint with curl or Postman. Verify it returns Exa search results. Check CORS headers allow frontend access.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Backend Development</span>
+                            <span class="concept-tag">API Proxy</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 9 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Display Quotes in Message UI</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Enhance MessageCard component to display Chinese quotes and citations when available, with collapsible details.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Quotes add educational value and authenticity. Users should see the Chinese text and source citation alongside English explanation.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>Update <code>MessageEvent</code> type to include optional quote fields:
+<pre>export type MessageEvent = {
+  // ... existing fields
+  quote?: {
+    chinese: string;
+    english: string;
+    source: string;
+  };
+};</pre>
+                                </li>
+                                <li>Modify <code>processBatchedTasks</code> to attach quote to message event</li>
+                                <li>Update <code>MessageCard</code> component to render quote:
+<pre>// In MessageCard component
+{message.quote && (
+  &lt;details className="quote-block"&gt;
+    &lt;summary&gt;📜 Classical Quote&lt;/summary&gt;
+    &lt;div className="chinese-quote"&gt;{message.quote.chinese}&lt;/div&gt;
+    &lt;div className="english-translation"&gt;{message.quote.english}&lt;/div&gt;
+    &lt;cite&gt;— {message.quote.source}&lt;/cite&gt;
+  &lt;/details&gt;
+)}</pre>
+                                </li>
+                                <li>Add CSS styling for quote block (similar to insight styling)</li>
+                            </ol>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Message with quote shows collapsible "Classical Quote" section. Chinese and English text display correctly. Source citation is visible.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">UI Enhancement</span>
+                            <span class="concept-tag">Data Display</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 10 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Add Turn Indicator to UI</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Add visual indicator showing which philosopher is currently speaking and who's queued next, enhancing turn-based dialogue clarity.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Sequential dialogue benefits from visual turn indicators. Users should see "Confucius is speaking..." and "Next: Laozi" for clarity.
+                        </div>
+
+                        <div>
+                            <strong>Implementation:</strong>
+                            <ol>
+                                <li>Add state: <code>const [currentSpeaker, setCurrentSpeaker] = useState<string | null>(null);</code></li>
+                                <li>Update <code>runQueue</code> to set current speaker:
+<pre>globallyProcessingRef.current = true;
+setCurrentSpeaker(philosopherId); // NEW
+processingRef.current[philosopherId] = true;</pre>
+                                </li>
+                                <li>Clear on completion:
+<pre>finally {
+  processingRef.current[philosopherId] = false;
+  globallyProcessingRef.current = false;
+  setCurrentSpeaker(null); // NEW
+  drainQueues();
+}</pre>
+                                </li>
+                                <li>Add UI component in dialogue header:
+<pre>&lt;div className="turn-indicator"&gt;
+  {currentSpeaker ? (
+    &lt;span&gt;🎤 {philosopherMap.get(currentSpeaker)?.name} is speaking...&lt;/span&gt;
+  ) : (
+    &lt;span&gt;Waiting for next turn&lt;/span&gt;
+  )}
+&lt;/div&gt;</pre>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Indicator shows current speaker's name during processing. Clears between turns. Updates in real-time.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">User Feedback</span>
+                            <span class="concept-tag">State Visualization</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 11 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Testing & Quality Assurance</div>
+                            <span class="badge badge-medium">🟡 Medium</span>
+                        </div>
+                        <div class="step-description">
+                            Comprehensive testing of all new features: sequential dialogue, web search, rectangle UI, dynamic topic, and auto-date.
+                        </div>
+
+                        <div>
+                            <strong>Test Cases:</strong>
+                            <ol>
+                                <li><strong>Sequential Dialogue:</strong>
+                                    <ul>
+                                        <li>Send 3 messages to different philosophers</li>
+                                        <li>Verify only one responds at a time (check logs for sequential processing)</li>
+                                        <li>Verify each philosopher addresses ALL queued messages in their response</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Web Search:</strong>
+                                    <ul>
+                                        <li>Send message about "virtue" to Confucius</li>
+                                        <li>Verify response includes Chinese quote about 仁 or 德</li>
+                                        <li>Check quote source citation is present</li>
+                                        <li>Test fallback: disconnect Exa, verify app doesn't crash</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Rectangle UI:</strong>
+                                    <ul>
+                                        <li>Visual inspection: all pills, buttons, tabs use rectangles</li>
+                                        <li>Check active states still work (borders, backgrounds)</li>
+                                        <li>Test responsive behavior on smaller screens</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Dynamic Topic:</strong>
+                                    <ul>
+                                        <li>Change topic to "Environmental Ethics"</li>
+                                        <li>Verify dialogue header updates</li>
+                                        <li>Verify Exa searches use new topic</li>
+                                    </ul>
+                                </li>
+                                <li><strong>Auto-Date:</strong>
+                                    <ul>
+                                        <li>Verify dialogue shows today's date</li>
+                                        <li>Refresh page, check date updates (if session-based) or stays same (if fixed on mount)</li>
+                                    </ul>
+                                </li>
+                            </ol>
+                        </div>
+
+                        <div class="warning-box">
+                            <strong>⚠️ Edge Cases to Test:</strong>
+                            <ul>
+                                <li>Empty topic string (should show placeholder or default)</li>
+                                <li>Exa API timeout or failure (should gracefully degrade)</li>
+                                <li>Multiple rapid messages (queue should handle correctly)</li>
+                                <li>Pausing/resuming during active processing</li>
+                            </ul>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> All test cases pass. No console errors. UI feels polished. Sequential dialogue is clearly observable.
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">QA</span>
+                            <span class="concept-tag">Integration Testing</span>
+                        </div>
+                    </li>
+
+                    <!-- STEP 12 -->
+                    <li class="step-item">
+                        <div class="step-header">
+                            <div class="step-title">Documentation & Code Comments</div>
+                            <span class="badge badge-easy">🟢 Easy</span>
+                        </div>
+                        <div class="step-description">
+                            Add inline comments explaining sequential dialogue logic, Exa integration, and queue processing for future maintainability.
+                        </div>
+
+                        <div class="step-rationale">
+                            <strong>Rationale:</strong> Sequential dialogue and batched response logic are non-trivial. Future developers (including yourself in 6 months) need clear explanations.
+                        </div>
+
+                        <div>
+                            <strong>Key areas to document:</strong>
+                            <ul>
+                                <li><strong>Global lock mechanism:</strong> Explain why <code>globallyProcessingRef</code> exists and how it enforces turn-taking</li>
+                                <li><strong>Batched task processing:</strong> Comment on why we dequeue ALL tasks and how they're aggregated</li>
+                                <li><strong>Exa integration:</strong> Document API call, response format, and fallback behavior</li>
+                                <li><strong>Topic/date state:</strong> Clarify why topic is user-controlled and date is session-fixed</li>
+                            </ul>
+                        </div>
+
+                        <div>
+                            <strong>Example comment:</strong>
+<pre>/**
+ * SEQUENTIAL DIALOGUE ENFORCEMENT
+ *
+ * We use a global processing lock to ensure only ONE philosopher
+ * speaks at a time. This creates natural turn-taking:
+ *
+ * 1. globallyProcessingRef prevents any agent from starting
+ *    while another is speaking
+ * 2. When an agent's turn starts, we dequeue ALL messages for
+ *    that agent (not just one)
+ * 3. Agent responds to all queued messages in a single comprehensive
+ *    reply
+ * 4. Lock releases, drainQueues() triggers next speaker
+ *
+ * This differs from parallel processing where multiple agents
+ * could respond simultaneously.
+ */</pre>
+                        </div>
+
+                        <div class="step-verification">
+                            <strong>✅ Verification:</strong> Code review shows clear comments. Complex logic is explained. Future you says "thank you."
+                        </div>
+
+                        <div>
+                            <span class="concept-tag">Documentation</span>
+                            <span class="concept-tag">Code Quality</span>
+                        </div>
+                    </li>
+                </ol>
+            </section>
+
+            <!-- SUCCESS CRITERIA -->
+            <section class="success-criteria">
+                <h4>✅ Definition of Done</h4>
+                <p>The implementation is complete when ALL of the following criteria are met:</p>
+                <ul>
+                    <li>✅ Modern/Classical Chinese toggles are removed from UI</li>
+                    <li>✅ User can input custom dialogue topic via UI field</li>
+                    <li>✅ Dialogue displays auto-generated date from system</li>
+                    <li>✅ Side panel uses rectangle-based UI (no pill shapes)</li>
+                    <li>✅ Only ONE philosopher speaks at a time (global lock enforced)</li>
+                    <li>✅ Philosophers respond to ALL queued messages in single reply</li>
+                    <li>✅ Exa web search successfully fetches Chinese quotes</li>
+                    <li>✅ Quotes display in message UI with Chinese text + citation</li>
+                    <li>✅ Backend /api/exa-search endpoint proxies to MCP Exa tool</li>
+                    <li>✅ Turn indicator shows current speaker in UI</li>
+                    <li>✅ All test cases pass (see Step 11)</li>
+                    <li>✅ Code includes comments explaining complex logic</li>
+                    <li>✅ No TypeScript errors or console warnings</li>
+                    <li>✅ App runs smoothly with all features enabled</li>
+                </ul>
+            </section>
+
+            <!-- RISKS & MITIGATION -->
+            <section>
+                <h2>⚠️ Risks & Mitigation Strategies</h2>
+
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Risk</th>
+                                <th>Impact</th>
+                                <th>Mitigation</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Exa API unavailable or slow</strong></td>
+                                <td>Responses missing quotes, increased latency</td>
+                                <td>
+                                    <ul>
+                                        <li>Implement 3s timeout</li>
+                                        <li>Graceful degradation (skip quote if search fails)</li>
+                                        <li>Cache results by topic+philosopher</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Sequential processing feels slow</strong></td>
+                                <td>User perceives lag, poor UX</td>
+                                <td>
+                                    <ul>
+                                        <li>Add turn indicator so users know processing is happening</li>
+                                        <li>Show queue depth in UI</li>
+                                        <li>Consider parallel Exa search + response generation</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Batched responses too long</strong></td>
+                                <td>Overwhelming text blocks, hard to read</td>
+                                <td>
+                                    <ul>
+                                        <li>Limit queue depth per agent (max 5 messages)</li>
+                                        <li>Format response with clear sections addressing each message</li>
+                                        <li>Add collapse/expand for long responses</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Exa returns irrelevant quotes</strong></td>
+                                <td>Quotes don't match topic or philosopher's school</td>
+                                <td>
+                                    <ul>
+                                        <li>Refine search query with school name + era</li>
+                                        <li>Validate quote relevance in backend before returning</li>
+                                        <li>Allow manual quote refresh button</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rectangle UI looks too harsh</strong></td>
+                                <td>Users prefer the softer rounded aesthetic</td>
+                                <td>
+                                    <ul>
+                                        <li>Use subtle border-radius (4-6px) instead of sharp corners</li>
+                                        <li>Add soft shadows to maintain depth</li>
+                                        <li>Iterate on feedback</li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- FUTURE ENHANCEMENTS -->
+            <section>
+                <h2>🚀 Future Enhancements (Out of Scope)</h2>
+                <p>These features are not part of the current implementation but could be added later:</p>
+
+                <details>
+                    <summary>📚 Quote Library & Caching</summary>
+                    <p>Build a local cache of frequently used quotes to reduce Exa API calls. Store quotes in localStorage or backend database with topic + philosopher keys.</p>
+                </details>
+
+                <details>
+                    <summary>🎯 Topic Suggestions</summary>
+                    <p>Provide a dropdown of common philosophical topics (ethics, governance, nature, virtue) for users unfamiliar with Chinese philosophy.</p>
+                </details>
+
+                <details>
+                    <summary>📊 Dialogue Analytics</summary>
+                    <p>Track conversation metrics: turn counts, response times, quote usage. Display in inspector panel.</p>
+                </details>
+
+                <details>
+                    <summary>🌐 Multi-Language Support</summary>
+                    <p>Re-introduce language support, but as a backend feature using translation APIs instead of pre-generated translations.</p>
+                </details>
+
+                <details>
+                    <summary>🎨 UI Theme Switcher</summary>
+                    <p>Allow users to toggle between rectangle-based (formal) and rounded (modern) UI themes based on preference.</p>
+                </details>
+            </section>
+
+            <!-- TECHNICAL DEBT -->
+            <section>
+                <h2>🔧 Technical Debt & Known Limitations</h2>
+                <ul>
+                    <li><strong>No persistent storage:</strong> Dialogue history and topic reset on page refresh. Consider adding localStorage or backend persistence.</li>
+                    <li><strong>Exa API rate limits:</strong> No rate limiting implemented. High-frequency usage could hit API quotas.</li>
+                    <li><strong>No quote verification:</strong> We trust Exa results without validating authenticity. Consider adding human review or multi-source verification.</li>
+                    <li><strong>Queue depth unbounded:</strong> No limit on queue size per agent. Could lead to memory issues in long sessions.</li>
+                    <li><strong>Single global lock:</strong> Sequential processing might be too restrictive for large councils. Consider hybrid approach (parallel within groups, sequential between groups).</li>
+                </ul>
+            </section>
+        </div>
+
+        <footer>
+            <p><strong>Implementation Plan Generated:</strong> 2025-10-09</p>
+            <p>Created with Claude Code · Version 1.0</p>
+        </footer>
+    </div>
+</body>
+</html>
