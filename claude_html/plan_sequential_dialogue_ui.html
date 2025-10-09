@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Confucian Café Frontend — Test Coverage & Bundling Plan</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    body {
+      margin: 0;
+      padding: 2.5rem;
+      background: #f4f5fb;
+      color: #1f2937;
+    }
+    .plan-shell {
+      max-width: 1180px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 18px;
+      box-shadow: 0 20px 55px -24px rgba(15, 23, 42, 0.3);
+      padding: 2.4rem 2.6rem 3rem;
+      border: 1px solid #e2e8f0;
+    }
+    .plan-header h1 {
+      margin: 0;
+      font-size: 1.85rem;
+      letter-spacing: -0.01rem;
+    }
+    .plan-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.8rem 1.6rem;
+      margin-top: 0.65rem;
+      font-size: 0.92rem;
+      color: #475569;
+    }
+    .plan-meta span {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .plan-meta .badge {
+      background: #e0e7ff;
+      color: #3730a3;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06rem;
+    }
+    .review-banner {
+      margin-top: 1.4rem;
+      padding: 1rem 1.4rem;
+      border-radius: 12px;
+      background: #fff4e5;
+      border: 1px solid #fbbf24;
+      color: #92400e;
+      font-weight: 600;
+    }
+    .summary-card {
+      margin-top: 1.8rem;
+      background: linear-gradient(135deg, rgba(226,232,240,0.55), rgba(226,232,240,0.1));
+      border-radius: 14px;
+      padding: 1.6rem 2rem;
+      border: 1px solid #dbe3f0;
+    }
+    .summary-card h2 {
+      margin: 0 0 1rem;
+      font-size: 1.25rem;
+    }
+    .summary-card p {
+      margin: 0 0 0.9rem;
+      line-height: 1.55;
+    }
+    .key-points {
+      margin: 0.2rem 0 0;
+      padding-left: 1.3rem;
+      color: #334155;
+    }
+    .key-points li {
+      margin-bottom: 0.45rem;
+    }
+    .two-column-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+      gap: 1.6rem;
+      margin-top: 2.2rem;
+    }
+    .collapsible {
+      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .collapsible.critical {
+      border-color: #6366f1;
+      box-shadow: 0 16px 30px -24px rgba(79, 70, 229, 0.55);
+    }
+    .collapsible-header {
+      background: #f8fafc;
+      padding: 0.95rem 1.4rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.98rem;
+      color: #1e293b;
+    }
+    .collapsible-header .arrow {
+      color: #94a3b8;
+      font-size: 0.88rem;
+    }
+    .collapsible-content {
+      padding: 1.25rem 1.5rem 1.4rem;
+      background: #ffffff;
+    }
+    .dense-list {
+      margin: 0;
+      padding-left: 1.25rem;
+    }
+    .dense-list li {
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .dense-list li:last-child {
+      margin-bottom: 0;
+    }
+    .indent-1 {
+      margin-left: 0.7rem;
+      margin-top: 0.4rem;
+    }
+    .indent-1.muted {
+      color: #64748b;
+      font-size: 0.83rem;
+      margin-bottom: 0.25rem;
+    }
+    .full-width {
+      margin-top: 1.8rem;
+    }
+    @media (max-width: 960px) {
+      body {
+        padding: 1.4rem;
+      }
+      .plan-shell {
+        padding: 1.8rem;
+      }
+      .two-column-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="plan-shell">
+    <header class="plan-header">
+      <h1>Confucian Café Frontend — Test Coverage Expansion & Bundling Roadmap</h1>
+      <div class="plan-meta">
+        <span>Owner: Fucheng Warren Zhu</span>
+        <span>Date: October 8, 2025</span>
+        <span>Repository: GENED1091/A2A_Confucious</span>
+        <span class="badge">High Complexity</span>
+      </div>
+    </header>
+
+    <div class="review-banner">
+      Review Status: Codex MCP reviewer unavailable in this environment; manual self-review completed prior to publication.
+    </div>
+
+    <section class="summary-card">
+      <h2>Executive Summary</h2>
+      <p>We will formalize a comprehensive testing strategy across unit, integration, end-to-end, accessibility, and manual layers for the Confucian Café React/Vite frontend, then harden the production bundling flow so the application ships as an optimized static bundle that can be served by the NabokovsWeb backend or any CDN. Work is sequenced to stabilize baseline knowledge, invest in automated coverage, capture non-functional guardrails, and ensure the Vite build output is deployment-ready.</p>
+      <ul class="key-points">
+        <li><strong>Request:</strong> Produce an actionable test plan and document how to compile the app into a distributable JavaScript bundle.</li>
+        <li><strong>Approach:</strong> Establish testing toolchain (Vitest, Testing Library, MSW, Playwright), map coverage to core flows (composer, queue orchestration, inspector drawer, language toggles), and finalize Vite build-to-serve workflow.</li>
+        <li><strong>Estimated Effort:</strong> ~5–7 engineering days (setup 1d, unit/integration 2d, E2E & non-functional 2d, bundling polish & docs 1–2d) with backend support for API contract validation.</li>
+      </ul>
+    </section>
+
+    <div class="two-column-layout">
+      <div class="collapsible critical" data-collapsible="open">
+        <div class="collapsible-header">
+          <span>⚡ Implementation Steps</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="collapsible-content">
+          <ol class="dense-list">
+            <li>
+              <strong>Step 1: Baseline the system flows and dependencies</strong>
+              <div class="indent-1 muted">Artifacts: src/App.tsx, src/lib/context.ts, src/lib/memory.ts, README.md</div>
+              <div class="indent-1"><strong>Actions:</strong> Trace the composer → queue → backend → inspector lifecycle, catalog feature flags (language toggles, auto-responses, event feed), and document state diagrams plus data contracts in <code>docs/testing/baseline.md</code>.</div>
+              <div class="indent-1"><strong>Success:</strong> Shared reference showing expected phases, network calls, and UI states for every persona.</div>
+            </li>
+            <li>
+              <strong>Step 2: Install and configure the automated testing toolchain</strong>
+              <div class="indent-1 muted">Files: package.json, vitest.config.ts, src/setupTests.ts</div>
+              <div class="indent-1"><strong>Actions:</strong> Add <code>vitest</code>, <code>@testing-library/react</code>, <code>@testing-library/user-event</code>, <code>msw</code>, and <code>@testing-library/jest-dom</code>; create Vitest config with jsdom environment; register global mocks (Intl, ResizeObserver) in <code>src/setupTests.ts</code>; add npm scripts <code>test</code>, <code>test:watch</code>, and <code>test:coverage</code>.</div>
+              <div class="indent-1"><strong>Success:</strong> <code>npm run test</code> executes sample suite headlessly with deterministic seed data.</div>
+            </li>
+            <li>
+              <strong>Step 3: Author unit tests for pure utilities and data transformers</strong>
+              <div class="indent-1 muted">Targets: parseModelResponse, assembleContextForPhilosopher, createEmptyMemories/pushMemoryEntry, formatDate/formatTime</div>
+              <div class="indent-1"><strong>Actions:</strong> Validate JSON parsing fallbacks, history assembly, timestamp formatting across time zones, and memory store invariants; verify error handling when backend returns malformed payloads.</div>
+              <div class="indent-1"><strong>Success:</strong> >90% branch coverage on <code>src/lib</code>, catching regression when backend schema shifts.</div>
+            </li>
+            <li>
+              <strong>Step 4: Build integration tests for React components and queues</strong>
+              <div class="indent-1 muted">Components: HeaderBand, LanguageChips, DialogueStream, InspectorDrawer, queue orchestration helpers</div>
+              <div class="indent-1"><strong>Actions:</strong> Use Testing Library + MSW to emulate backend health, verify toggles update UI, ensure queue depth badge changes, confirm inspector snapshot renders, and assert pause/resume halts new auto-responses.</div>
+              <div class="indent-1"><strong>Success:</strong> Critical interaction flows covered with deterministic UI assertions and snapshot transparency.</div>
+            </li>
+            <li>
+              <strong>Step 5: Implement Playwright end-to-end scenarios</strong>
+              <div class="indent-1 muted">Setup: playwright.config.ts, e2e/specs/*.spec.ts</div>
+              <div class="indent-1"><strong>Actions:</strong> Script multi-philosopher run (composer submission, auto-reply cascade, inspector drill-down); cover backend-offline fallback (mock 503 to confirm warning banner); exercise language toggles and manual pause/resume across phases.</div>
+              <div class="indent-1"><strong>Success:</strong> Green suite gates releases; videos stored for regression triage.</div>
+            </li>
+            <li>
+              <strong>Step 6: Codify non-functional and manual QA matrices</strong>
+              <div class="indent-1 muted">Docs: docs/testing/accessibility.md, docs/testing/manual-regression.md</div>
+              <div class="indent-1"><strong>Actions:</strong> Add automated Axe checks, keyboard traversal scripts, screen reader notes; define performance budgets (FCP, TTI via Lighthouse CI); specify manual smoke scripts for new philosophers, translation accuracy, and memory retention when backend latency spikes.</div>
+              <div class="indent-1"><strong>Success:</strong> Non-functional gates documented with owners and acceptance thresholds.</div>
+            </li>
+              <strong>Step 7: Harden the production bundling workflow</strong>
+              <div class="indent-1 muted">Files: vite.config.ts, package.json, backend static serving script</div>
+              <div class="indent-1"><strong>Actions:</strong> Confirm <code>npm run build</code> emits optimized assets into <code>dist/</code>; configure Vite build options (code splitting, <code>build.outDir</code>, <code>assetsInlineLimit</code>, <code>base</code> for deployment path); document integration with NabokovsWeb backend via <code>express.static</code> or <code>serve</code>; craft deployment checklist (<code>npm run build</code> → <code>npm run preview</code> validation → upload to CDN/server).</div>
+              <div class="indent-1"><strong>Success:</strong> Reproducible production bundle with hashed assets, sourcemaps, and documented serve instructions.</div>
+            </li>
+            <li>
+              <strong>Step 8: Wire coverage & build steps into CI/CD</strong>
+              <div class="indent-1 muted">Artifacts: .github/workflows/test-and-build.yml (or equivalent)</div>
+              <div class="indent-1"><strong>Actions:</strong> Run Vitest (unit/integration), Playwright (headed in CI with trace), accessibility checks, and Vite build for each PR; publish coverage summary; enforce branch protection requiring green pipeline.</div>
+              <div class="indent-1"><strong>Success:</strong> Automated gate preventing regressions and guaranteeing distributable bundle per merge.</div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <div class="collapsible secondary" data-collapsible="open">
+        <div class="collapsible-header">
+          <span>✓ Testing & Validation</span>
+          <span class="arrow">▼</span>
+        </div>
+        <div class="collapsible-content">
+          <ul class="dense-list">
+            <li>
+              <strong>Unit — Model response parsing</strong>
+              <div class="indent-1">Given raw JSON strings with/without reasoning, ensure <code>parseModelResponse</code> extracts <code>finalText</code>, handles malformed braces, and separates reasoning when double-newlines exist.</div>
+              <div class="indent-1"><em>Expected:</em> All branches covered; malformed input returns safe fallback with logged warning.</div>
+            </li>
+            <li>
+              <strong>Unit — Context assembly & memory</strong>
+              <div class="indent-1">Validate <code>assembleContextForPhilosopher</code> builds history lines with proper recipients, timestamps, and phases; confirm <code>pushMemoryEntry</code> maintains chronological ordering and per-philosopher caps.</div>
+              <div class="indent-1"><em>Expected:</em> Deterministic prompt text and memory snapshots suitable for backend handoff.</div>
+            </li>
+            <li>
+              <strong>Component — Header & toggles</strong>
+              <div class="indent-1">Render <code>HeaderBand</code> and <code>LanguageChips</code>; simulate clicks to enable/disable modern/classical toggles; assert UI badges and composer defaults update; verify pause toggle disables queue draining.</div>
+              <div class="indent-1"><em>Expected:</em> Accessibility roles intact, state reflected across dependent components.</div>
+            </li>
+            <li>
+              <strong>Component — Queue orchestration</strong>
+              <div class="indent-1">Mock backend responses via MSW; submit composer prompt; inspect queue depth chips and event feed entries; assert auto-generated replies are enqueued per recipients and dedupe logic works.</div>
+              <div class="indent-1"><em>Expected:</em> Queue length increments/decrements predictably; duplicates suppressed.</div>
+            </li>
+            <li>
+              <strong>E2E — Multi-philosopher conversation</strong>
+              <div class="indent-1">Playwright journey: start dev server, send prompt to Confucius & Mozi, observe automated replies, open inspector, download snapshot, toggle language translations.</div>
+              <div class="indent-1"><em>Expected:</em> Each step finishes < 10s, inspector list updates, downloaded JSON schema validated.</div>
+            </li>
+            <li>
+              <strong>E2E — Backend offline fallback</strong>
+              <div class="indent-1">Simulate <code>/health</code> returning 503; confirm header shows offline pill, event feed posts warning, UI prevents new auto-responses but still allows manual transcript review.</div>
+              <div class="indent-1"><em>Expected:</em> Graceful degradation without uncaught promise rejections.</div>
+            </li>
+            <li>
+              <strong>Non-functional — Accessibility & performance</strong>
+              <div class="indent-1">Run Axe (Vitest + jest-axe) on key screens; ensure keyboard traversal through composer, toggles, drawers; Lighthouse CI budgets: FCP ≤ 2.0s, TTI ≤ 2.5s on MacBook Air baseline.</div>
+              <div class="indent-1"><em>Expected:</em> WCAG 2.1 AA compliance, performance budget met for production bundle.</div>
+            </li>
+            <li>
+              <strong>Build Verification — Vite production bundle</strong>
+              <div class="indent-1">Execute <code>npm run build</code>; inspect <code>dist/</code> for hashed JS/CSS, ensure <code>manifest.json</code> generated; run <code>npm run preview</code> to serve bundle; integration test hitting <code>/api</code> proxy replaced with environment-configured base URL.</div>
+              <div class="indent-1"><em>Expected:</em> 200 responses for assets, sourcemap availability, no proxy leakage in production config.</div>
+            </li>
+            <li>
+              <strong>Manual Regression — Release checklist</strong>
+              <div class="indent-1">Smoke test new philosophers, verify translations, confirm queue drains under pause/resume toggles, test snapshot download opened in JSON viewer, check bundling deploy on staging host.</div>
+              <div class="indent-1"><em>Expected:</em> All critical workflows validated before tagging release.</div>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="collapsible secondary" data-collapsible="closed">
+        <div class="collapsible-header">
+          <span>📍 Prerequisites & Context</span>
+          <span class="arrow">▶</span>
+        </div>
+        <div class="collapsible-content">
+          <ul class="dense-list">
+            <li><strong>Environment:</strong> Node.js 20+, npm 10+, locally running NabokovsWeb backend at <code>http://localhost:3100</code> for live integration tests.</li>
+            <li><strong>Source Anatomy:</strong> <code>src/App.tsx</code> (orchestration), <code>src/lib/*</code> (utilities), <code>src/data/mockData.ts</code> (seeded messages), <code>src/styles/app.css</code>.</li>
+            <li><strong>Existing Scripts:</strong> <code>npm run dev</code>, <code>npm run build</code>, <code>npm run preview</code>, <code>npm run lint</code>; custom test scripts to be introduced.</li>
+            <li><strong>Data Contracts:</strong> Align with backend JSON schema for message events, inspector snapshots, health endpoint; document in baseline step.</li>
+            <li><strong>Access Needs:</strong> Determine storage for Playwright artifacts, CI secrets for staging deployment, CDN credentials if using static hosting.</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="collapsible secondary" data-collapsible="closed">
+        <div class="collapsible-header">
+          <span>⚠️ Potential Issues & Mitigations</span>
+          <span class="arrow">▶</span>
+        </div>
+        <div class="collapsible-content">
+          <ul class="dense-list">
+            <li><strong>Async queue flakiness:</strong> Use fake timers/controlled promises in Vitest to avoid race conditions; inject deterministic delays for Playwright via mock server.</li>
+            <li><strong>Backend contract drift:</strong> Generate TypeScript types from backend OpenAPI (if available) or shared schema package to keep tests aligned.</li>
+            <li><strong>Production proxy mismatch:</strong> Configure <code>VITE_API_BASE</code> env variable; ensure build-time replacement removes dev proxy assumptions.</li>
+            <li><strong>Large asset payloads:</strong> Monitor bundle size; enable Rollup visualizer to detect regressions; consider dynamic imports for inspector drawer if needed.</li>
+            <li><strong>Localization coverage:</strong> Expand test fixtures for classical/modern Chinese translations to prevent regressions when new philosophers added.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="collapsible full-width" data-collapsible="closed">
+      <div class="collapsible-header">
+        <span>📊 Post-Implementation</span>
+        <span class="arrow">▶</span>
+      </div>
+      <div class="collapsible-content">
+        <ul class="dense-list">
+          <li><strong>Documentation:</strong> Publish testing runbook, bundling handoff checklist, and CI pipeline diagram in <code>docs/</code>; share quickstart for QA partners.</li>
+          <li><strong>Maintenance:</strong> Schedule quarterly audit of Playwright scripts and bundle size budgets; add Renovate/Dependabot to keep Vitest/Playwright current.</li>
+          <li><strong>Operationalization:</strong> Integrate coverage badge into README; set up Slack/Teams notifications for failed builds; add release template referencing this plan.</li>
+          <li><strong>Next Enhancements:</strong> Consider contract tests against live NabokovsWeb staging, visual regression testing (Chromatic or Loki), and canary deployments for bundle validation.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Collapsible toggle helper (basic fallback if HTML snippet JS is unavailable)
+    document.querySelectorAll('[data-collapsible]').forEach(section => {
+      const header = section.querySelector('.collapsible-header');
+      const content = section.querySelector('.collapsible-content');
+      const arrow = section.querySelector('.arrow');
+      if (!header || !content || !arrow) return;
+      const initialState = section.getAttribute('data-collapsible');
+      if (initialState === 'closed') {
+        content.style.display = 'none';
+        arrow.textContent = '▶';
+      } else {
+        arrow.textContent = '▼';
+      }
+      header.addEventListener('click', () => {
+        const isHidden = content.style.display === 'none';
+        content.style.display = isHidden ? 'block' : 'none';
+        arrow.textContent = isHidden ? '▼' : '▶';
+      });
+    });
+  </script>
+</body>
+</html>

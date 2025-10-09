@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>A2A Python Server Architecture</title>
+<style>
+:root {
+    --chinese-red: #8B0000;
+    --chinese-gold: #FFD700;
+    --jade-green: #00A86B;
+    --ink-black: #2B2B2B;
+    --paper-beige: #F5F5DC;
+    --light-cream: #FAFAF0;
+    --level-1: #000;
+    --level-2: #333;
+    --level-3: #666;
+    --level-4: #999;
+}
+body {
+    background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+    color: var(--ink-black);
+    margin: 0;
+    padding: 0;
+    width: 100vw;
+    max-width: 100%;
+    line-height: 1.2;
+    font-size: 14px;
+    font-family: "Inter", "Helvetica Neue", Arial, sans-serif;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+.container {
+    width: 100%;
+    padding: 0 8px;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 4px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+}
+h1 {
+    font-size: 24px;
+    font-weight: 900;
+    margin: 4px 0;
+    padding: 4px 0;
+    background: linear-gradient(135deg, var(--chinese-red), #CD5C5C);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
+}
+h2 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 4px 0;
+    color: var(--chinese-red);
+}
+h3 {
+    font-size: 15px;
+    font-weight: 600;
+    margin: 2px 0 4px 0;
+    color: var(--level-2);
+}
+p, li {
+    color: var(--level-2);
+}
+button {
+    background: var(--chinese-gold);
+    border: none;
+    padding: 4px 10px;
+    margin-left: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--ink-black);
+    border-radius: 3px;
+}
+button:hover {
+    background: #f5c400;
+}
+.important-always-visible {
+    background: rgba(255, 215, 0, 0.12);
+    border-left: 3px solid var(--chinese-red);
+    padding: 8px 6px;
+    margin: 6px 0 4px 0;
+}
+.two-column-layout {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+.dense-list {
+    list-style: none;
+    border: 1px solid rgba(0,0,0,0.08);
+    padding: 6px 6px 4px 6px;
+    background: rgba(255,255,255,0.55);
+    display: grid;
+    gap: 3px;
+}
+.dense-list li {
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+    gap: 4px;
+}
+.dense-list strong {
+    color: var(--level-1);
+    font-weight: 700;
+}
+.citation {
+    color: var(--jade-green);
+    font-size: 11px;
+    margin-left: 4px;
+}
+.critical {
+    color: var(--chinese-red);
+    font-weight: 700;
+}
+.warning {
+    color: var(--chinese-gold);
+    font-weight: 700;
+}
+.success {
+    color: var(--jade-green);
+    font-weight: 700;
+}
+.muted {
+    color: var(--level-4);
+}
+.collapsible {
+    border: 1px solid rgba(0,0,0,0.12);
+    margin: 4px 0;
+    background: rgba(250,250,240,0.7);
+    transition: border-color 0.2s ease;
+}
+.collapsible.full-width {
+    grid-column: 1 / -1;
+}
+.collapsible-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 8px;
+    cursor: pointer;
+    color: var(--level-1);
+    font-weight: 600;
+}
+.collapsible-header:hover {
+    background: rgba(255,215,0,0.15);
+}
+.collapsible-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.25s ease;
+    padding: 0 8px;
+}
+.collapsible.open {
+    border-color: var(--chinese-red);
+    background: rgba(255, 248, 230, 0.9);
+}
+.collapsible.open .collapsible-content {
+    max-height: 520px;
+    padding: 6px 8px 8px 8px;
+}
+.arrow {
+    font-size: 12px;
+    color: var(--level-3);
+}
+.mermaid {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid rgba(0,0,0,0.12);
+    padding: 6px;
+    font-size: 12px;
+}
+code {
+    background: rgba(0,0,0,0.05);
+    padding: 1px 3px;
+    border-radius: 2px;
+    font-size: 12px;
+}
+.key-points {
+    display: grid;
+    gap: 4px;
+    padding-top: 4px;
+}
+.key-points p {
+    font-size: 13px;
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+<script>
+if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: true, theme: "neutral" });
+}
+</script>
+</head>
+<body>
+<div class="container">
+<header>
+    <h1>A2A Python Server Architecture</h1>
+    <div>
+        <button id="expand-all">Expand All</button>
+        <button id="collapse-all">Collapse All</button>
+    </div>
+</header>
+<main>
+    <section class="important-always-visible">
+        <h2>🎯 Critical Understanding</h2>
+        <div class="two-column-layout">
+            <ul class="dense-list">
+                <li><strong>Role</strong><span>Reference A2A service that brokers JSON-RPC between clients and your agent logic</span></li>
+                <li><strong>Deliverable</strong><span>Saved + opened: claude_html/a2a_server_overview.html</span></li>
+            </ul>
+            <ul class="dense-list">
+                <li><strong>Key flow</strong><span>HTTP app → Request handler → Agent executor → Event queues → Task stores</span></li>
+                <li><strong>Extensibility</strong><span class="success">Swap FastAPI/Starlette, plug custom storage & push transport</span></li>
+            </ul>
+        </div>
+    </section>
+
+    <div class="two-column-layout">
+        <section class="collapsible" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>⚙️ Request Lifecycle</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="key-points">
+                    <p><strong>Ingress</strong>: <code>A2AFastAPIApplication</code> (or Starlette/REST variants) mounts three core endpoints: agent card discovery, JSON-RPC, and optional authenticated card, wiring them into your FastAPI app via <code>add_routes_to_app</code>/<code>build</code> helpers.citeturn5view0</p>
+                    <p><strong>Dispatch</strong>: <code>JSONRPCApplication</code> maps method names like <code>message/send</code> or <code>tasks/cancel</code> to Pydantic request models before forwarding to a <code>RequestHandler</code>.citeturn5view0</p>
+                    <p><strong>Default handling</strong>: <code>DefaultRequestHandler</code> coordinates the agent executor, task store, queue manager, and optional push sender to fulfill each RPC verb (send, stream, cancel, push-config CRUD).citeturn6view0</p>
+                    <p><strong>Streaming</strong>: For <code>message/stream</code>, the handler starts execution, then yields events via an async generator so clients can observe incremental updates.citeturn6view0</p>
+                </div>
+                <pre class="mermaid">sequenceDiagram
+    participant Client
+    participant HTTP as HTTP App
+    participant Handler
+    participant Executor
+    participant Queue
+    participant Store
+
+    Client->>HTTP: JSON-RPC request
+    HTTP->>Handler: Parse + validate
+    Handler->>Executor: execute(context)
+    Executor-->>Queue: enqueue events
+    Handler->>Queue: stream via EventConsumer
+    Queue-->>Handler: Task/Message events
+    Handler->>Store: persist via TaskManager
+    Handler-->>Client: Blocking or streamed response
+                </pre>
+            </div>
+        </section>
+
+        <section class="collapsible" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>🧠 Agent Execution Core</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="key-points">
+                    <p><strong>Executor contract</strong>: Implement <code>AgentExecutor</code> with async <code>execute</code> and <code>cancel</code> methods; it receives a <code>RequestContext</code> plus an event queue to publish messages, task status updates, or artifacts.citeturn4view0</p>
+                    <p><strong>Context building</strong>: <code>SimpleRequestContextBuilder</code> hydrates <code>RequestContext</code> with the incoming message, task/context IDs, related tasks, and server call metadata, optionally loading referenced tasks for tool calls.citeturn4view0</p>
+                    <p><strong>ServerCallContext</strong>: Keeps per-call state (user identity, activated extensions) and is available to handlers and executors for auth or auditing.citeturn2view0</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="collapsible" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>📮 Event Pipeline</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="key-points">
+                    <p><strong>EventQueue</strong>: Buffers agent emissions (messages, task updates, artifacts) and supports <code>tap()</code> to fork child queues, enabling simultaneous streaming to multiple subscribers.citeturn8view0</p>
+                    <p><strong>EventConsumer</strong>: Async generator that drains the queue, re-raising agent exceptions and feeding downstream processors or HTTP streams.citeturn8view0</p>
+                    <p><strong>QueueManager</strong>: Maps task IDs to event queues; the in-memory implementation suits single-instance deployments while allowing taps/resubscriptions.citeturn8view0</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="collapsible" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>🗂️ Task & Persistence Layer</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <div class="key-points">
+                    <p><strong>TaskManager</strong>: Tracks lifecycle per request, ensuring tasks exist, applying event updates, and persisting via a pluggable <code>TaskStore</code>.citeturn7view0</p>
+                    <p><strong>ResultAggregator</strong>: Consumes the event stream to either block until completion, emit incremental results, or fork processing for push scenarios.citeturn7view0</p>
+                    <p><strong>Push notifications</strong>: <code>PushNotificationSender</code> and associated stores let you persist per-task webhook targets and emit HTTP callbacks whenever task state changes.citeturn7view0</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="collapsible" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>🔌 Extensibility Hooks</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ul class="dense-list">
+                    <li><strong>Transport swap</strong><span>Use FastAPI, raw Starlette, or REST adapter without rewriting handlers.citeturn5view0</span></li>
+                    <li><strong>Custom storage</strong><span>Implement <code>TaskStore</code> / <code>PushNotificationConfigStore</code> for databases or distributed caches.citeturn7view0</span></li>
+                    <li><strong>Extensions</strong><span><code>RequestContext</code> tracks requested/activated extensions so the executor can selectively enable skills.citeturn4view0</span></li>
+                    <li><strong>Auth cards</strong><span>Provide dynamic authenticated agent cards via handler modifiers and <code>GetAuthenticatedExtendedCard</code>.citeturn6view0</span></li>
+                </ul>
+            </div>
+        </section>
+
+        <section class="collapsible full-width" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>🛠️ Implementation Checklist</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <ol style="padding-left:18px; font-size:13px; color:var(--level-2);">
+                    <li>Publish an <code>AgentCard</code> (static JSON) describing capabilities and transports.</li>
+                    <li>Instantiate <code>A2AFastAPIApplication</code> with your agent card, custom <code>RequestHandler</code>, and optional extended card builder.citeturn5view0</li>
+                    <li>Implement an <code>AgentExecutor</code> that uses <code>TaskUpdater</code> to enqueue meaningful task status and artifact events.citeturn4view0turn7view0</li>
+                    <li>Configure persistence by wiring a <code>TaskStore</code> (in-memory for dev, database for production) and optional push notification stores.citeturn7view0</li>
+                    <li>Expose streaming endpoints and permit resubscribe by registering queues in a <code>QueueManager</code>.citeturn8view0</li>
+                </ol>
+            </div>
+        </section>
+
+        <section class="collapsible full-width" data-collapsible="closed">
+            <div class="collapsible-header">
+                <span>📊 Component Relationships</span>
+                <span class="arrow">▶</span>
+            </div>
+            <div class="collapsible-content">
+                <pre class="mermaid">flowchart TB
+    subgraph HTTP Layer
+        App[A2A FastAPI/Starlette App]
+        Handler[JSONRPC/REST Handler]
+    end
+    subgraph Core Server
+        ReqHandler[DefaultRequestHandler]
+        CtxBuilder[RequestContextBuilder]
+        Exec[AgentExecutor]
+        Ctx[RequestContext]
+    end
+    subgraph Runtime Services
+        QueueMgr[QueueManager]
+        Queue[EventQueue]
+        Consumer[EventConsumer]
+        Aggregator[ResultAggregator]
+        TaskMgr[TaskManager]
+        Store[TaskStore]
+        Push[PushNotificationSender]
+    end
+
+    App --> Handler
+    Handler --> ReqHandler
+    ReqHandler -->|build| CtxBuilder
+    CtxBuilder --> Ctx
+    ReqHandler --> Exec
+    Exec --> Queue
+    Queue --> Consumer
+    Consumer --> Aggregator
+    Aggregator --> TaskMgr
+    TaskMgr --> Store
+    TaskMgr --> Push
+    QueueMgr --> Queue
+    ReqHandler --> QueueMgr
+                </pre>
+            </div>
+        </section>
+    </div>
+</main>
+</div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('[data-collapsible]').forEach(function(section) {
+        const isOpen = section.getAttribute('data-collapsible') === 'open';
+        section.classList.add('collapsible');
+        if (isOpen) section.classList.add('open');
+    });
+
+    document.querySelectorAll('.collapsible-header').forEach(function(header) {
+        header.addEventListener('click', function() {
+            const collapsible = this.closest('.collapsible');
+            collapsible.classList.toggle('open');
+        });
+    });
+
+    const expandAllBtn = document.getElementById('expand-all');
+    const collapseAllBtn = document.getElementById('collapse-all');
+
+    if (expandAllBtn) {
+        expandAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.collapsible').forEach(function(c) {
+                c.classList.add('open');
+            });
+        });
+    }
+
+    if (collapseAllBtn) {
+        collapseAllBtn.addEventListener('click', function() {
+            document.querySelectorAll('.collapsible').forEach(function(c) {
+                c.classList.remove('open');
+            });
+        });
+    }
+});
+</script>
+</body>
+</html>
