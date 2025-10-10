@@ -179,7 +179,7 @@ const App = () => {
     setQueueDepths((prev) => {
       const next: Record<string, number> = {};
       philosopherIds.forEach((id) => {
-        next[id] = queuesRef.current[id]?.length ?? 0;
+        next[id] = globalQueueRef.current.pending.get(id)?.length ?? 0;
       });
       const prevKeys = Object.keys(prev);
       if (prevKeys.length !== philosopherIds.length) {
@@ -190,7 +190,27 @@ const App = () => {
     });
   }, [philosopherIds]);
 
-  const queuesRef = useRef<Record<string, ResponseTask[]>>({});
+  /**
+   * GLOBAL PRIORITY QUEUE
+   *
+   * Replaces per-philosopher queues with a single global queue that preserves
+   * addressee order. When a philosopher responds with addressees: ["laozi", "mozi"],
+   * laozi will respond first, then mozi.
+   *
+   * Structure:
+   * - queue: ordered list of philosopher IDs waiting to speak
+   * - pending: Map of philosopher ID to their queued tasks (for batching)
+   *
+   * Deduplication: If a philosopher is already in queue, they stay in original position.
+   * New tasks are added to their pending list for batched response.
+   */
+  const globalQueueRef = useRef<{
+    queue: string[];
+    pending: Map<string, ResponseTask[]>;
+  }>({
+    queue: [],
+    pending: new Map(),
+  });
 
   const processingRef = useRef<Record<string, boolean>>({});
 
@@ -212,10 +232,8 @@ const App = () => {
   const topicRef = useRef(topic);
 
   useEffect(() => {
+    // Initialize processing flags for new philosophers
     philosopherIds.forEach((id) => {
-      if (!queuesRef.current[id]) {
-        queuesRef.current[id] = [];
-      }
       if (typeof processingRef.current[id] !== 'boolean') {
         processingRef.current[id] = false;
       }
@@ -246,45 +264,41 @@ const App = () => {
     });
   }, [philosopherIds]);
 
-  function deriveReplyRecipients(task: ResponseTask): string[] {
-    const recipients = new Set<string>();
-    const trigger = task.trigger;
+  /**
+   * ADDRESSEE-ORDERED ENQUEUE
+   *
+   * Adds philosophers to the global queue in the order specified by addressees.
+   * Implements deduplication: if a philosopher is already in the queue, they stay
+   * in their original position and the new task is added to their pending list.
+   *
+   * @param addressees - Ordered list of philosopher IDs to enqueue
+   * @param trigger - The message that triggered this response
+   */
+  function enqueueWithPriority(addressees: string[], trigger: MessageEvent) {
+    if (!addressees.length) return;
 
-    if (trigger.recipients.includes('all')) {
-      philosopherIds.forEach((id) => {
-        if (id !== task.philosopherId) {
-          recipients.add(id);
-        }
-      });
-    }
+    addressees.forEach((addresseeId) => {
+      // Validate addressee is a real philosopher
+      if (!philosopherMap.has(addresseeId)) return;
 
-    trigger.recipients.forEach((recipient) => {
-      if (
-        recipient !== 'all' &&
-        recipient !== task.philosopherId &&
-        philosopherMap.has(recipient)
-      ) {
-        recipients.add(recipient);
+      // Create task for this addressee
+      const now = Date.now();
+      const task: ResponseTask = {
+        id: `task-${addresseeId}-${trigger.id}-${now}-${Math.random().toString(36).slice(2, 6)}`,
+        philosopherId: addresseeId,
+        trigger,
+      };
+
+      // Add task to pending queue for batching
+      const existing = globalQueueRef.current.pending.get(addresseeId) || [];
+      globalQueueRef.current.pending.set(addresseeId, [...existing, task]);
+
+      // Add to global queue ONLY if not already present (deduplication)
+      if (!globalQueueRef.current.queue.includes(addresseeId)) {
+        globalQueueRef.current.queue.push(addresseeId);
       }
     });
 
-    if (trigger.speaker !== task.philosopherId && philosopherMap.has(trigger.speaker)) {
-      recipients.add(trigger.speaker);
-    }
-
-    recipients.add('moderator');
-
-    return Array.from(recipients);
-  }
-
-  function enqueueTasks(tasks: ResponseTask[]) {
-    if (!tasks.length) return;
-    tasks.forEach((task) => {
-      if (!queuesRef.current[task.philosopherId]) {
-        queuesRef.current[task.philosopherId] = [];
-      }
-      queuesRef.current[task.philosopherId].push(task);
-    });
     updateQueueDepths();
     drainQueues();
   }
@@ -293,38 +307,39 @@ const App = () => {
     if (processedMessagesRef.current.has(message.id)) return;
     processedMessagesRef.current.add(message.id);
 
-    const targets = new Set<string>();
-    message.recipients.forEach((recipient) => {
-      if (recipient !== message.speaker && philosopherMap.has(recipient)) {
-        targets.add(recipient);
-      }
-    });
+    // Determine targets based on recipients
+    const targets: string[] = [];
 
     if (message.recipients.includes('all')) {
+      // Add all philosophers except the speaker
       philosopherIds.forEach((id) => {
         if (id !== message.speaker) {
-          targets.add(id);
+          targets.push(id);
+        }
+      });
+    } else {
+      // Add specific recipients (preserving order)
+      message.recipients.forEach((recipient) => {
+        if (recipient !== message.speaker && philosopherMap.has(recipient)) {
+          targets.push(recipient);
         }
       });
     }
 
-    if (targets.size === 0) return;
+    if (targets.length === 0) return;
 
-    const now = Date.now();
-    const tasks: ResponseTask[] = Array.from(targets).map((targetId) => ({
-      id: `task-${targetId}-${message.id}-${now}-${Math.random().toString(36).slice(2, 6)}`,
-      philosopherId: targetId,
-      trigger: message,
-    }));
-
-    enqueueTasks(tasks);
+    // Enqueue with addressee order preserved
+    enqueueWithPriority(targets, message);
   }
 
   function drainQueues() {
     if (isPausedRef.current) return;
-    philosopherIds.forEach((id) => {
-      void runQueue(id);
-    });
+
+    // Process the first philosopher in the global queue
+    if (globalQueueRef.current.queue.length > 0) {
+      const nextPhilosopherId = globalQueueRef.current.queue[0];
+      void runQueue(nextPhilosopherId);
+    }
   }
 
   /**
@@ -332,35 +347,37 @@ const App = () => {
    *
    * This function enforces turn-taking by:
    * 1. Checking global lock (only one speaker at a time)
-   * 2. Dequeuing ALL tasks for this philosopher
-   * 3. Processing them together as a batch
-   * 4. Releasing lock and triggering next speaker
+   * 2. Removing philosopher from global queue
+   * 3. Dequeuing ALL pending tasks for this philosopher
+   * 4. Processing them together as a batch
+   * 5. Releasing lock and triggering next speaker
    */
   async function runQueue(philosopherId: string): Promise<void> {
     if (isPausedRef.current) return;
-    if (globallyProcessingRef.current) return; // NEW: global lock check
+    if (globallyProcessingRef.current) return; // Global lock check
     if (processingRef.current[philosopherId]) return;
 
-    const queue = queuesRef.current[philosopherId];
-    if (!queue || queue.length === 0) return;
+    // Get pending tasks from global queue
+    const tasks = globalQueueRef.current.pending.get(philosopherId);
+    if (!tasks || tasks.length === 0) return;
 
-    // NEW: Dequeue ALL tasks for comprehensive response
-    const tasks = [...queue];
-    queuesRef.current[philosopherId] = [];
+    // Remove philosopher from queue and clear their pending tasks
+    globalQueueRef.current.queue = globalQueueRef.current.queue.filter(
+      (id) => id !== philosopherId
+    );
+    globalQueueRef.current.pending.delete(philosopherId);
     updateQueueDepths();
 
-    if (tasks.length === 0) return;
-
-    globallyProcessingRef.current = true; // NEW: acquire global lock
+    globallyProcessingRef.current = true; // Acquire global lock
     processingRef.current[philosopherId] = true;
-    setCurrentSpeaker(philosopherId); // NEW: set current speaker indicator
+    setCurrentSpeaker(philosopherId); // Set current speaker indicator
     try {
       await processBatchedTasks(tasks);
     } finally {
       processingRef.current[philosopherId] = false;
-      globallyProcessingRef.current = false; // NEW: release global lock
-      setCurrentSpeaker(null); // NEW: clear speaker indicator
-      // NEW: Trigger next speaker
+      globallyProcessingRef.current = false; // Release global lock
+      setCurrentSpeaker(null); // Clear speaker indicator
+      // Trigger next speaker
       drainQueues();
     }
   }
@@ -683,7 +700,7 @@ const App = () => {
     );
     setQueueDepths((prev) => ({
       ...prev,
-      [philosopher.id]: queuesRef.current[philosopher.id]?.length ?? 0,
+      [philosopher.id]: globalQueueRef.current.pending.get(philosopher.id)?.length ?? 0,
     }));
     appendEventFeed(
       `${formatTime(new Date().toISOString())} · system → ${philosopher.name} joined`,
