@@ -1,0 +1,1065 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Addressee-Based Queue System Implementation Plan</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f5dc 0%, #fffef0 100%);
+            color: #1a1a1a;
+        }
+        h1 {
+            color: #8b0000;
+            border-bottom: 3px solid #8b0000;
+            padding-bottom: 10px;
+            font-size: 2.2em;
+        }
+        h2 {
+            color: #b71c1c;
+            margin-top: 30px;
+            font-size: 1.8em;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            font-size: 1.4em;
+        }
+        .section {
+            background: white;
+            border: 2px solid rgba(139, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        .learning-objectives {
+            background: linear-gradient(135deg, rgba(139, 0, 0, 0.08), rgba(255, 215, 0, 0.12));
+            border-left: 5px solid #8b0000;
+        }
+        .concept-card {
+            background: rgba(255, 248, 220, 0.6);
+            border: 1px solid rgba(139, 0, 0, 0.24);
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        .concept-card h4 {
+            color: #8b0000;
+            margin-top: 0;
+        }
+        .architecture-diagram {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 20px;
+            font-family: 'Courier New', monospace;
+            overflow-x: auto;
+            white-space: pre;
+            line-height: 1.4;
+        }
+        .step {
+            background: rgba(255, 255, 255, 0.9);
+            border-left: 4px solid #8b0000;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .step-header {
+            font-weight: bold;
+            color: #8b0000;
+            font-size: 1.1em;
+            margin-bottom: 8px;
+        }
+        .complexity {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .easy { background: #c8e6c9; color: #2e7d32; }
+        .medium { background: #fff9c4; color: #f57f17; }
+        .advanced { background: #ffcdd2; color: #c62828; }
+        .rationale {
+            background: rgba(255, 215, 0, 0.1);
+            border-left: 3px solid #ffd700;
+            padding: 10px;
+            margin: 10px 0;
+            font-style: italic;
+        }
+        .warning {
+            background: #fff3e0;
+            border-left: 4px solid #ff9800;
+            padding: 12px;
+            margin: 10px 0;
+        }
+        .code-block {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 12px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+        }
+        .success-criteria {
+            background: #e8f5e9;
+            border: 2px solid #4caf50;
+            border-radius: 6px;
+            padding: 15px;
+            margin: 15px 0;
+        }
+        ul, ol {
+            margin: 10px 0;
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        strong {
+            color: #8b0000;
+        }
+        .tag {
+            display: inline-block;
+            background: rgba(139, 0, 0, 0.12);
+            border: 1px solid rgba(139, 0, 0, 0.3);
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.85em;
+            margin: 2px;
+            color: #8b0000;
+        }
+    </style>
+</head>
+<body>
+    <h1>🏮 Addressee-Based Queue System Implementation Plan</h1>
+    <p style="font-size: 1.1em; color: #555; font-style: italic;">
+        Implementing structured dialogue with addressee targeting and intelligent queue management
+    </p>
+
+    <div class="section learning-objectives">
+        <h2>📚 Learning Objectives</h2>
+        <h3>Core Concepts You'll Master</h3>
+        <ul>
+            <li><strong>Addressee-Directed Communication</strong>: Philosophers explicitly specify recipients in JSON output, enabling targeted dialogue</li>
+            <li><strong>Priority Queue Management</strong>: Order-dependent queueing where recipient order determines response order</li>
+            <li><strong>Context Segmentation</strong>: Separating "direct messages" from "ambient conversations" for weighted attention</li>
+            <li><strong>Queue Deduplication</strong>: Preventing duplicate queue entries while preserving original queue position</li>
+            <li><strong>Sequential Turn-Taking</strong>: Maintaining one-speaker-at-a-time constraint with batched message processing</li>
+        </ul>
+
+        <h3>Design Patterns Applied</h3>
+        <ul>
+            <li><strong>Producer-Consumer with Priority Queue</strong>: Messages are produced with priority (addressee order), consumed in priority order</li>
+            <li><strong>Weighted Context Pattern</strong>: Different message types receive different attention weights (direct > ambient)</li>
+            <li><strong>Idempotent Enqueuing</strong>: Safe to enqueue same philosopher multiple times without duplication</li>
+            <li><strong>Comprehensive Response Pattern</strong>: Respond to ALL queued messages in one turn (current behavior preserved)</li>
+        </ul>
+
+        <h3>Technologies & Mechanisms</h3>
+        <ul>
+            <li><strong>JSON Output Contract Extension</strong>: Adding <code>addressees</code> array field to philosopher responses</li>
+            <li><strong>XML Context Structuring</strong>: Separating <code>&lt;DirectMessages&gt;</code> and <code>&lt;AmbientContext&gt;</code></li>
+            <li><strong>TypeScript Type Extension</strong>: Updating <code>MessageEvent</code> type for new addressing model</li>
+            <li><strong>Queue State Management</strong>: Using Maps/Sets for deduplication and order preservation</li>
+        </ul>
+
+        <h3>Skills You'll Develop</h3>
+        <ul>
+            <li>Design addressee-based communication systems</li>
+            <li>Implement priority queues with deduplication logic</li>
+            <li>Structure prompts with weighted context sections</li>
+            <li>Manage complex state transitions in dialogue systems</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🎓 Background & Key Concepts</h2>
+
+        <div class="concept-card">
+            <h4>Concept: Addressee-Directed Communication</h4>
+            <p><strong>What it is</strong>: Instead of the moderator selecting recipients, philosophers themselves specify who should receive their message by returning an <code>addressees: string[]</code> field in their JSON response.</p>
+
+            <p><strong>Think of it as</strong>: Like email's "To:" field. When someone sends a message, they decide who should read and respond to it.</p>
+
+            <p><strong>Why we use it</strong>: Gives philosophers agency in directing conversation flow. Confucius can specifically challenge Mozi's utilitarian logic by addressing him directly, creating focused debates.</p>
+
+            <p><strong>Implementation note</strong>: The addressee order matters—first in list responds first. This allows philosophers to strategically sequence responses (e.g., "I want Laozi to respond first, then Mencius").</p>
+        </div>
+
+        <div class="concept-card">
+            <h4>Concept: Priority Queue with Deduplication</h4>
+            <p><strong>What it is</strong>: A queue where items have priorities (here: position in addressees list), and attempting to add an already-queued item doesn't create duplicates—it preserves the original position.</p>
+
+            <p><strong>Think of it as</strong>: Like a restaurant wait list where you can't put your name down twice. If you're already on the list and someone else calls you back, you stay in your original spot.</p>
+
+            <p><strong>Why we use it</strong>: Prevents philosophers from being overwhelmed. If Confucius addresses Mozi, then Laozi also addresses Mozi before Mozi responds, Mozi should respond ONCE to BOTH messages, not get inserted into the queue twice.</p>
+
+            <p><strong>Current behavior preserved</strong>: When Mozi's turn comes, he dequeues ALL his pending messages and responds comprehensively to all of them at once (existing batching logic).</p>
+        </div>
+
+        <div class="concept-card">
+            <h4>Concept: Direct vs. Ambient Context</h4>
+            <p><strong>What it is</strong>: Messages are categorized as "direct" (addressed to you) or "ambient" (addressed to others, but you can overhear). Direct messages receive higher attention weight in the prompt.</p>
+
+            <p><strong>Think of it as</strong>: Like being at a dinner table. When someone speaks directly to you, you pay full attention and are expected to respond. When others are talking, you hear it but aren't obligated to engage.</p>
+
+            <p><strong>Why we use it</strong>: Gives philosophers contextual awareness without overwhelming them. They can reference ambient conversations ("As I heard Laozi say to Mozi...") but focus primarily on messages meant for them.</p>
+
+            <p><strong>Prompt structure</strong>:
+                <pre class="code-block">
+&lt;DirectMessages&gt;
+  &lt;!-- Messages where you are in addressees list --&gt;
+  &lt;!-- PRIORITY: Respond to these --&gt;
+&lt;/DirectMessages&gt;
+
+&lt;AmbientContext&gt;
+  &lt;!-- Messages where you're NOT in addressees list --&gt;
+  &lt;!-- AWARENESS: You can reference these but don't need to respond --&gt;
+&lt;/AmbientContext&gt;</pre>
+            </p>
+        </div>
+
+        <div class="concept-card">
+            <h4>Concept: Order-Dependent Queueing</h4>
+            <p><strong>What it is</strong>: When a philosopher returns <code>addressees: ["laozi", "mozi", "mencius"]</code>, those philosophers are enqueued in that EXACT order. Laozi goes first, then Mozi, then Mencius.</p>
+
+            <p><strong>Think of it as</strong>: Like setting an agenda for a meeting. "I want to hear from Laozi first on this topic, then get Mozi's counterargument, then Mencius can synthesize."</p>
+
+            <p><strong>Why we use it</strong>: Enables sophisticated rhetorical strategies. A philosopher can strategically sequence responses to build argumentation (e.g., establish a premise with one person before challenging another).</p>
+
+            <p><strong>Implementation</strong>: Use a global queue (not per-philosopher queues) with position tracking. When enqueuing from <code>addressees</code> array, insert in order while respecting deduplication.</p>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>🏗️ How This Works (Architecture Overview)</h2>
+
+        <h3>Current System (Before Changes)</h3>
+        <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────┐
+│  MODERATOR CHOOSES RECIPIENTS                        │
+│  User selects: [confucius, laozi, mozi]              │
+└───────────────┬──────────────────────────────────────┘
+                │
+                ▼
+        ┌───────────────────┐
+        │ Create UserMessage│
+        │ recipients: [c,l,m]│
+        └────────┬───────────┘
+                 │
+                 ▼
+    ┌────────────────────────────┐
+    │ enqueueResponsesFromMessage│
+    │ Creates task for each       │
+    │ recipient in parallel       │
+    └─────┬──────────────────────┘
+          │
+          ├──→ Queue[confucius] ← task
+          ├──→ Queue[laozi]     ← task
+          └──→ Queue[mozi]      ← task
+                 │
+                 ▼
+    ┌────────────────────────────┐
+    │ Sequential Processing       │
+    │ (globallyProcessingRef)     │
+    │ One philosopher at a time   │
+    └─────┬──────────────────────┘
+          │
+          ▼
+    Philosopher dequeues ALL tasks,
+    responds comprehensively to all
+        </div>
+
+        <h3>New System (After Changes)</h3>
+        <div class="architecture-diagram">
+┌──────────────────────────────────────────────────────┐
+│  PHILOSOPHER CHOOSES ADDRESSEES                      │
+│  Confucius returns: {                                │
+│    final: "...",                                     │
+│    reasoning: "...",                                 │
+│    addressees: ["laozi", "mozi"]  ← NEW              │
+│  }                                                   │
+└───────────────┬──────────────────────────────────────┘
+                │
+                ▼
+    ┌─────────────────────────────┐
+    │ Parse JSON response          │
+    │ Extract addressees array     │
+    └──────────┬──────────────────┘
+               │
+               ▼
+    ┌──────────────────────────────────┐
+    │ Create MessageEvent               │
+    │ recipients = addressees           │
+    │ (Now set by philosopher, not user)│
+    └──────────┬───────────────────────┘
+               │
+               ▼
+    ┌────────────────────────────────────┐
+    │ enqueueByPriority()  ← NEW          │
+    │ Enqueue in ORDER of addressees list│
+    │ With deduplication logic            │
+    └──────────┬─────────────────────────┘
+               │
+               ├──→ Global Priority Queue
+               │    Position 1: laozi (if not queued)
+               │    Position 2: mozi  (if not queued)
+               │
+               ▼
+    ┌────────────────────────────────────┐
+    │ assembleContextForPhilosopher()     │
+    │ ← ENHANCED                          │
+    │                                     │
+    │ Build TWO context sections:         │
+    │  1. <DirectMessages>                │
+    │     - Messages where I'm in          │
+    │       addressees list               │
+    │     - WEIGHT: High priority         │
+    │                                     │
+    │  2. <AmbientContext>                │
+    │     - Messages where I'm NOT in      │
+    │       addressees list               │
+    │     - WEIGHT: Awareness only        │
+    └────────────────────────────────────┘
+        </div>
+
+        <h3>Key Behavioral Changes</h3>
+        <ol>
+            <li><strong>Addressing Control Shifts from User to Philosopher</strong>
+                <ul>
+                    <li>BEFORE: User (moderator) clicks recipient pills to choose who responds</li>
+                    <li>AFTER: User can still address initial prompt, but philosophers' subsequent responses choose their own addressees</li>
+                    <li>PRESERVED: User always starts conversations by addressing philosophers</li>
+                </ul>
+            </li>
+
+            <li><strong>Queue Management Changes from Per-Philosopher to Global Priority</strong>
+                <ul>
+                    <li>BEFORE: <code>queuesRef.current[philosopherId] = Task[]</code> (separate queue per philosopher)</li>
+                    <li>AFTER: Single global queue with priority positions determined by addressee order</li>
+                    <li>PRESERVED: Only one philosopher speaks at a time (global lock)</li>
+                </ul>
+            </li>
+
+            <li><strong>Context Assembly Adds Weighting</strong>
+                <ul>
+                    <li>BEFORE: All messages treated equally in <code>&lt;ConversationMemory&gt;</code></li>
+                    <li>AFTER: Direct messages in <code>&lt;DirectMessages&gt;</code>, ambient in <code>&lt;AmbientContext&gt;</code></li>
+                    <li>PRESERVED: Memory system still tracks all messages for history</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Data Flow Example</h3>
+        <div class="code-block">
+1. USER SENDS: "Confucius and Mozi, what is your stance on ritual?"
+   → recipients: ["confucius", "mozi"]
+   → Enqueue: confucius (pos 1), mozi (pos 2)
+
+2. CONFUCIUS RESPONDS: {
+     final: "Ritual embodies ren...",
+     addressees: ["mozi", "laozi"]  ← Confucius chooses who to address
+   }
+   → Create MessageEvent with recipients: ["mozi", "laozi"]
+   → Enqueue: mozi ALREADY AT pos 2 (stays), laozi (pos 3)
+
+3. MOZI'S TURN (pos 2 in queue)
+   → Dequeue ALL Mozi's pending messages:
+     - User's original question
+     - Confucius's challenge
+   → Build context:
+     <DirectMessages>
+       [User]: "Mozi, what is your stance..."
+       [Confucius]: "Ritual embodies..." (addressed to mozi)
+     </DirectMessages>
+     <AmbientContext>
+       (empty - no other conversations yet)
+     </AmbientContext>
+   → Mozi responds comprehensively to BOTH messages
+
+4. MOZI RESPONDS: {
+     final: "Measure by utility...",
+     addressees: ["confucius"]  ← Mozi replies specifically to Confucius
+   }
+   → Enqueue: confucius (pos 4, or earlier if still queued)
+
+5. LAOZI'S TURN (pos 3)
+   → Build context:
+     <DirectMessages>
+       [Confucius]: "Ritual embodies..." (addressed to laozi)
+     </DirectMessages>
+     <AmbientContext>
+       [User]: "Confucius and Mozi..." (not addressed to laozi)
+       [Mozi]: "Measure by utility..." (not addressed to laozi)
+     </AmbientContext>
+   → Laozi can reference ambient context ("I hear Mozi values utility...")
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>📋 Prerequisites & Context</h2>
+        <h3>Files to Examine</h3>
+        <ul>
+            <li><code>src/types.ts</code> - <code>MessageEvent</code> type definition (need to understand current <code>recipients</code> field)</li>
+            <li><code>src/App.tsx</code> -
+                <ul>
+                    <li><code>parseModelResponse()</code> - Currently extracts <code>final</code> and <code>reasoning</code>, need to add <code>addressees</code></li>
+                    <li><code>enqueueResponsesFromMessage()</code> - Current per-philosopher queueing logic</li>
+                    <li><code>processBatchedTasks()</code> - Where context is assembled</li>
+                    <li><code>queuesRef.current</code> - Current queue structure</li>
+                </ul>
+            </li>
+            <li><code>src/lib/context.ts</code> - <code>assembleContextForPhilosopher()</code> needs refactoring</li>
+            <li><code>src/lib/memory.ts</code> - Memory system (shouldn't need changes, but understand it)</li>
+        </ul>
+
+        <h3>Current System Understanding Checklist</h3>
+        <ul>
+            <li>✅ Sequential dialogue already works (global lock in place)</li>
+            <li>✅ Batched responses already work (dequeue ALL tasks at once)</li>
+            <li>✅ Memory system tracks all messages</li>
+            <li>✅ User can select recipients via pills in UI</li>
+            <li>❌ Philosophers cannot choose their own addressees (NEW)</li>
+            <li>❌ No priority-based queue ordering (NEW)</li>
+            <li>❌ No direct vs. ambient context separation (NEW)</li>
+        </ul>
+
+        <h3>Dependencies & Constraints</h3>
+        <ul>
+            <li><strong>MUST PRESERVE</strong>: One speaker at a time (global lock)</li>
+            <li><strong>MUST PRESERVE</strong>: Batched comprehensive responses (current behavior)</li>
+            <li><strong>MUST PRESERVE</strong>: User can still initiate conversations</li>
+            <li><strong>MUST ADD</strong>: Addressees field in JSON output</li>
+            <li><strong>MUST ADD</strong>: Priority queue logic with deduplication</li>
+            <li><strong>MUST ADD</strong>: Direct/ambient context separation</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>🔧 Step-by-Step Implementation</h2>
+
+        <div class="step">
+            <div class="step-header">
+                Step 1: Update Type Definitions
+                <span class="complexity easy">🟢 Easy</span>
+                <span class="tag">Types</span>
+            </div>
+            <p>Extend TypeScript types to support addressee-based communication.</p>
+
+            <div class="rationale">
+                <strong>Why this first:</strong> Type definitions should always come before implementation. This gives us type safety and autocomplete throughout the refactor.
+            </div>
+
+            <p><strong>Changes to make:</strong></p>
+            <ol>
+                <li>No changes needed to <code>MessageEvent.recipients</code> (already exists)</li>
+                <li>Update <code>parseModelResponse</code> return type to include <code>addressees?: string[]</code></li>
+                <li>Ensure <code>MessageEvent</code> type allows philosophers to set recipients</li>
+            </ol>
+
+            <div class="code-block">
+// src/App.tsx - Update parseModelResponse signature
+type ParsedResponse = {
+  finalText: string;
+  reasoning?: string;
+  addressees?: string[];  // ← NEW
+};
+
+const parseModelResponse = (raw: string): ParsedResponse => {
+  // ... existing parsing ...
+  const maybeAddressees = parsed.addressees ?? parsed.recipients ?? parsed.to;
+
+  return {
+    finalText,
+    reasoning,
+    addressees: Array.isArray(maybeAddressees) ? maybeAddressees : undefined
+  };
+};</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 2: Refactor Queue Structure - Global Priority Queue
+                <span class="complexity advanced">🔴 Advanced</span>
+                <span class="tag">State Management</span>
+                <span class="tag">Data Structures</span>
+            </div>
+            <p>Replace per-philosopher queues with a single global priority queue that supports deduplication.</p>
+
+            <div class="rationale">
+                <strong>Why this approach:</strong> Per-philosopher queues can't preserve addressee order across philosophers. A global queue with position tracking ensures "Confucius wants Laozi then Mozi" actually happens in that order.
+            </div>
+
+            <p><strong>Current structure:</strong></p>
+            <div class="code-block">
+const queuesRef = useRef<Record<string, ResponseTask[]>>({
+  confucius: [task1, task2],
+  laozi: [task3],
+  mozi: [task4, task5]
+});</div>
+
+            <p><strong>New structure:</strong></p>
+            <div class="code-block">
+// Global priority queue with deduplication
+const globalQueueRef = useRef<{
+  queue: string[],              // Ordered list of philosopher IDs
+  pending: Map<string, ResponseTask[]>  // Tasks per philosopher (for batching)
+}>({
+  queue: [],
+  pending: new Map()
+});
+
+// Example state:
+// queue: ["laozi", "mozi", "confucius"]
+// pending: {
+//   laozi: [task1, task2],    // Laozi has 2 messages to respond to
+//   mozi: [task3],
+//   confucius: [task4]
+// }</div>
+
+            <p><strong>Implementation steps:</strong></p>
+            <ol>
+                <li>Create new <code>globalQueueRef</code> structure</li>
+                <li>Write <code>enqueueWithPriority(philosopherIds: string[], triggerMessage: MessageEvent)</code> function</li>
+                <li>Write <code>dequeueNext(): { philosopherId: string, tasks: ResponseTask[] } | null</code> function</li>
+                <li>Update <code>drainQueues()</code> to use global queue</li>
+            </ol>
+
+            <div class="warning">
+                <strong>⚠️ Common Pitfall:</strong> Don't confuse "queue position" with "task batching". A philosopher can be in the queue ONCE (position 2) but have MULTIPLE tasks pending (3 messages to respond to). When their turn comes, they respond to ALL tasks at once.
+            </div>
+
+            <div class="code-block">
+function enqueueWithPriority(
+  addressees: string[],
+  triggerMessage: MessageEvent
+) {
+  const { queue, pending } = globalQueueRef.current;
+
+  addressees.forEach(philosopherId => {
+    // Add task to pending (always, for batching)
+    if (!pending.has(philosopherId)) {
+      pending.set(philosopherId, []);
+    }
+    pending.get(philosopherId)!.push({
+      id: `task-${philosopherId}-${triggerMessage.id}-${Date.now()}`,
+      philosopherId,
+      trigger: triggerMessage
+    });
+
+    // Add to queue ONLY if not already queued (deduplication)
+    if (!queue.includes(philosopherId)) {
+      queue.push(philosopherId);  // Preserves addressee order
+    }
+  });
+
+  updateQueueDepths();  // UI update
+}</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 3: Update Context Assembly - Direct vs. Ambient
+                <span class="complexity medium">🟡 Medium</span>
+                <span class="tag">Context Building</span>
+                <span class="tag">XML Structuring</span>
+            </div>
+            <p>Refactor <code>assembleContextForPhilosopher</code> to separate direct messages from ambient context.</p>
+
+            <div class="rationale">
+                <strong>Why separate contexts:</strong> Without weighting, a philosopher addressed by one person but overhearing 10 other conversations would have their attention diluted. Explicit sections signal what deserves focus.
+            </div>
+
+            <p><strong>Current structure:</strong></p>
+            <div class="code-block">
+&lt;ConversationMemory max="${memoryState.max}"&gt;
+  &lt;![CDATA[
+  [timestamp] speaker → recipients :: message
+  [timestamp] speaker → recipients :: message
+  ...all messages equally weighted...
+  ]]&gt;
+&lt;/ConversationMemory&gt;</div>
+
+            <p><strong>New structure:</strong></p>
+            <div class="code-block">
+&lt;DirectMessages priority="HIGH"&gt;
+  &lt;![CDATA[
+  [timestamp] speaker → YOU :: message content
+  [timestamp] speaker → YOU, other :: message content
+  ]]&gt;
+  &lt;Instruction&gt;
+    FOCUS YOUR RESPONSE ON THESE. You are explicitly addressed.
+    Respond comprehensively to each direct message.
+  &lt;/Instruction&gt;
+&lt;/DirectMessages&gt;
+
+&lt;AmbientContext priority="AWARENESS"&gt;
+  &lt;![CDATA[
+  [timestamp] speaker → others :: message content
+  [timestamp] speaker → others :: message content
+  ]]&gt;
+  &lt;Instruction&gt;
+    These are conversations you can overhear but are not addressed to you.
+    You may reference them for context but are not expected to respond.
+  &lt;/Instruction&gt;
+&lt;/AmbientContext&gt;</div>
+
+            <p><strong>Implementation:</strong></p>
+            <ol>
+                <li>In <code>context.ts</code>, add parameter <code>philosopherId: string</code> to <code>assembleContextForPhilosopher</code></li>
+                <li>Filter memory entries into two arrays:
+                    <ul>
+                        <li><code>directMessages = entries.filter(e => e.recipients.includes(philosopherId))</code></li>
+                        <li><code>ambientMessages = entries.filter(e => !e.recipients.includes(philosopherId) && e.speaker !== philosopherId)</code></li>
+                    </ul>
+                </li>
+                <li>Build separate XML sections for each</li>
+                <li>Update prompt template to include instruction text</li>
+            </ol>
+
+            <div class="code-block">
+// src/lib/context.ts
+export const assembleContextForPhilosopher = (
+  philosopher: Philosopher,
+  memoryState: MemoryState,
+  newPrompt: { recipients: string[]; text: string; timestamp: string; speaker: string },
+  topic?: string,
+): AssembledContext => {
+  const history = getHistoryFor(memoryState, philosopher.id);
+
+  // Separate into direct and ambient
+  const directMessages = history.filter(entry =>
+    entry.recipients.includes(philosopher.id) ||
+    entry.recipients.includes('all') ||
+    entry.speaker === philosopher.id  // Own messages are "direct" for context
+  );
+
+  const ambientMessages = history.filter(entry =>
+    !entry.recipients.includes(philosopher.id) &&
+    !entry.recipients.includes('all') &&
+    entry.speaker !== philosopher.id
+  );
+
+  const directHistory = directMessages.map(formatEntry).join('\n');
+  const ambientHistory = ambientMessages.map(formatEntry).join('\n');
+
+  const promptText = `&lt;Prompt&gt;
+  &lt;SystemPersona philosopher="${philosopher.id}" version="2025-10-10"&gt;
+    &lt;![CDATA[
+    ${philosopher.personaTemplate}
+    ]]&gt;
+  &lt;/SystemPersona&gt;
+
+  ${topicSection}
+
+  &lt;DirectMessages priority="HIGH"&gt;
+    &lt;![CDATA[
+    ${directHistory}
+    ]]&gt;
+    &lt;Instruction&gt;
+      FOCUS YOUR RESPONSE ON THESE. You are explicitly addressed.
+      Respond comprehensively to each direct message above.
+    &lt;/Instruction&gt;
+  &lt;/DirectMessages&gt;
+
+  &lt;AmbientContext priority="AWARENESS"&gt;
+    &lt;![CDATA[
+    ${ambientHistory}
+    ]]&gt;
+    &lt;Instruction&gt;
+      These are conversations between others. You may reference them
+      for context but are not expected to respond unless relevant.
+    &lt;/Instruction&gt;
+  &lt;/AmbientContext&gt;
+
+  &lt;Directive&gt;
+    &lt;![CDATA[
+    Latest Prompt: ${newPrompt.text}
+    ]]&gt;
+  &lt;/Directive&gt;
+
+  &lt;OutputContract&gt;
+    &lt;![CDATA[
+    Return a strict JSON object with keys "reasoning", "final", and "addressees".
+    - reasoning: concise internal analysis
+    - final: polished prose delivered to recipients
+    - addressees: array of philosopher IDs you wish to address (e.g., ["laozi", "mozi"])
+                  Order matters: first addressee responds first, second responds second, etc.
+                  You may address 0-N philosophers. Empty array means no responses expected.
+    ]]&gt;
+  &lt;/OutputContract&gt;
+&lt;/Prompt&gt;`;
+
+  return { promptText, renderedHistory: directHistory, latestLine: '', historyEntries: directMessages };
+};</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 4: Update Response Parsing to Extract Addressees
+                <span class="complexity easy">🟢 Easy</span>
+                <span class="tag">JSON Parsing</span>
+            </div>
+            <p>Modify <code>parseModelResponse</code> to extract the new <code>addressees</code> field from philosopher responses.</p>
+
+            <p><strong>Changes:</strong></p>
+            <div class="code-block">
+const parseModelResponse = (raw: string): ParsedResponse => {
+  const fallback = typeof raw === 'string' ? raw.trim() : '';
+  let finalText = fallback;
+  let reasoning: string | undefined;
+  let addressees: string[] | undefined;  // ← NEW
+
+  if (typeof raw === 'string') {
+    const firstBrace = raw.indexOf('{');
+    const lastBrace = raw.lastIndexOf('}');
+    if (firstBrace !== -1 && lastBrace !== -1) {
+      const candidate = raw.slice(firstBrace, lastBrace + 1);
+      try {
+        const parsed = JSON.parse(candidate);
+        const maybeFinal = parsed.final ?? parsed.answer ?? parsed.response;
+        const maybeReasoning = parsed.reasoning ?? parsed.analysis;
+        const maybeAddressees = parsed.addressees ?? parsed.recipients ?? parsed.to;  // ← NEW
+
+        if (typeof maybeFinal === 'string' && maybeFinal.trim()) {
+          finalText = maybeFinal.trim();
+        }
+        if (typeof maybeReasoning === 'string' && maybeReasoning.trim()) {
+          reasoning = maybeReasoning.trim();
+        }
+        if (Array.isArray(maybeAddressees) && maybeAddressees.every(a => typeof a === 'string')) {  // ← NEW
+          addressees = maybeAddressees;
+        }
+      } catch {
+        // ignore parse failure
+      }
+    }
+  }
+
+  return { finalText, reasoning, addressees };
+};</div>
+
+            <div class="warning">
+                <strong>⚠️ Fallback behavior:</strong> If philosopher doesn't return <code>addressees</code>, default to <code>["moderator"]</code> (reply back to who sent the message). This prevents breaking existing behavior.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 5: Wire Up New Queue System in processBatchedTasks
+                <span class="complexity medium">🟡 Medium</span>
+                <span class="tag">Integration</span>
+            </div>
+            <p>Update <code>processBatchedTasks</code> to use addressees from response and enqueue with priority.</p>
+
+            <p><strong>Changes:</strong></p>
+            <div class="code-block">
+async function processBatchedTasks(tasks: ResponseTask[]): Promise<void> {
+  if (tasks.length === 0) return;
+
+  const philosopher = philosopherMap.get(tasks[0].philosopherId);
+  if (!philosopher) return;
+
+  // ... existing context assembly ...
+
+  const response = await sendMessageToBackend({
+    messages: [{ role: 'user', content: enhancedPrompt }],
+  });
+
+  const { finalText, reasoning, addressees } = parseModelResponse(response.content);  // ← Extract addressees
+
+  // Determine recipients: use addressees if provided, else fallback to moderator
+  const replyRecipients = addressees && addressees.length > 0
+    ? addressees
+    : ['moderator'];  // ← NEW: Addressees determine recipients
+
+  const replyMessage: MessageEvent = {
+    id: `reply-${tasks[0].philosopherId}-${Date.now()}`,
+    type: 'message',
+    speaker: philosopher.id,
+    recipients: replyRecipients,  // ← Now set by philosopher's addressees
+    phase: currentPhase,
+    timestamp: replyTimestamp,
+    surface: finalText,
+    insight: reasoning,
+    translations: { english: finalText },
+  };
+
+  setMessages(prev => [...prev, replyMessage]);
+
+  // Memory and snapshots (unchanged)
+  // ...
+
+  // ← NEW: Enqueue with priority instead of old logic
+  enqueueWithPriority(replyMessage.recipients, replyMessage);
+}</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 6: Update drainQueues and runQueue for Global Queue
+                <span class="complexity medium">🟡 Medium</span>
+                <span class="tag">Queue Processing</span>
+            </div>
+            <p>Refactor queue processing logic to work with the global priority queue.</p>
+
+            <p><strong>New drainQueues:</strong></p>
+            <div class="code-block">
+function drainQueues() {
+  if (isPausedRef.current) return;
+  if (globallyProcessingRef.current) return;  // Global lock check
+
+  const { queue, pending } = globalQueueRef.current;
+
+  if (queue.length === 0) return;  // Nothing to process
+
+  const nextPhilosopherId = queue[0];  // Always process first in queue
+  void runQueue(nextPhilosopherId);
+}</div>
+
+            <p><strong>Updated runQueue:</strong></p>
+            <div class="code-block">
+async function runQueue(philosopherId: string): Promise<void> {
+  if (isPausedRef.current) return;
+  if (globallyProcessingRef.current) return;
+
+  const { queue, pending } = globalQueueRef.current;
+  const tasks = pending.get(philosopherId) || [];
+
+  if (tasks.length === 0) {
+    // Remove from queue if no tasks (shouldn't happen, but defensive)
+    const index = queue.indexOf(philosopherId);
+    if (index !== -1) queue.splice(index, 1);
+    return;
+  }
+
+  // Remove from queue and clear pending
+  const index = queue.indexOf(philosopherId);
+  if (index !== -1) queue.splice(index, 1);
+  pending.delete(philosopherId);
+  updateQueueDepths();
+
+  globallyProcessingRef.current = true;
+  processingRef.current[philosopherId] = true;
+  setCurrentSpeaker(philosopherId);
+
+  try {
+    await processBatchedTasks(tasks);
+  } finally {
+    processingRef.current[philosopherId] = false;
+    globallyProcessingRef.current = false;
+    setCurrentSpeaker(null);
+
+    // Trigger next in queue
+    drainQueues();
+  }
+}</div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 7: Update UI to Show Addressees
+                <span class="complexity easy">🟢 Easy</span>
+                <span class="tag">UI/UX</span>
+            </div>
+            <p>Update message cards to display who the message is addressed to (using philosopher-chosen addressees).</p>
+
+            <p><strong>No changes needed!</strong> The existing UI already shows <code>message.recipients</code> in the "→ recipients" line. Since we're now setting <code>recipients</code> from <code>addressees</code>, it will automatically display correctly.</p>
+
+            <p><strong>Optional enhancement:</strong> Add tooltip or visual indicator that this is philosopher-chosen (not user-chosen).</p>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 8: Update User Prompt Flow
+                <span class="complexity easy">🟢 Easy</span>
+                <span class="tag">Integration</span>
+            </div>
+            <p>Ensure user-initiated messages still work (moderator can address philosophers).</p>
+
+            <p><strong>In handlePrompt:</strong></p>
+            <div class="code-block">
+const handlePrompt = ({ prompt, recipients }: ComposerSubmission) => {
+  const trimmed = prompt.trim();
+  if (!trimmed || recipients.length === 0) return;
+
+  const timestamp = new Date().toISOString();
+  const userMessage: MessageEvent = {
+    id: `user-${Date.now()}`,
+    type: 'message',
+    speaker: 'moderator',
+    recipients,  // ← User still chooses initial recipients
+    phase: currentPhase,
+    timestamp,
+    surface: trimmed,
+    translations: { english: trimmed },
+  };
+
+  setMessages(prev => [...prev, userMessage]);
+  setMemories(prev => {
+    const next = pushMemoryEntry(prev, userMessage);
+    memoriesRef.current = next;
+    return next;
+  });
+
+  // ← NEW: Use priority queue for user messages too
+  enqueueWithPriority(userMessage.recipients, userMessage);
+};</div>
+
+            <div class="warning">
+                <strong>⚠️ Important:</strong> User's recipient selection ONLY affects the initial prompt. After philosophers respond, THEY control who gets addressed next via their <code>addressees</code> field.
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-header">
+                Step 9: Testing & Validation
+                <span class="complexity medium">🟡 Medium</span>
+                <span class="tag">Testing</span>
+            </div>
+            <p>Comprehensive testing of the new addressee-based queue system.</p>
+
+            <h4>Test Scenarios</h4>
+
+            <div class="success-criteria">
+                <strong>✓ Test 1: Basic Addressee Flow</strong>
+                <ol>
+                    <li>User addresses Confucius: "What is your view on ritual?"</li>
+                    <li>Confucius responds with <code>addressees: ["mozi"]</code></li>
+                    <li>Verify: Mozi receives message and responds</li>
+                    <li>Verify: Laozi does NOT respond (not addressed)</li>
+                </ol>
+            </div>
+
+            <div class="success-criteria">
+                <strong>✓ Test 2: Priority Order Preserved</strong>
+                <ol>
+                    <li>Confucius responds with <code>addressees: ["laozi", "mozi", "mencius"]</code></li>
+                    <li>Verify: Queue order is [laozi, mozi, mencius]</li>
+                    <li>Verify: Laozi speaks first, then Mozi, then Mencius</li>
+                </ol>
+            </div>
+
+            <div class="success-criteria">
+                <strong>✓ Test 3: Deduplication Works</strong>
+                <ol>
+                    <li>Confucius addresses Mozi (Mozi enqueued at position 1)</li>
+                    <li>Laozi addresses Mozi BEFORE Mozi responds</li>
+                    <li>Verify: Mozi stays at position 1 (not re-queued)</li>
+                    <li>Verify: When Mozi's turn comes, he responds to BOTH messages</li>
+                </ol>
+            </div>
+
+            <div class="success-criteria">
+                <strong>✓ Test 4: Direct vs. Ambient Context</strong>
+                <ol>
+                    <li>Confucius addresses Mozi</li>
+                    <li>Mozi addresses Laozi</li>
+                    <li>Laozi responds</li>
+                    <li>Verify: Laozi's context has:
+                        <ul>
+                            <li>DirectMessages: Mozi's message to Laozi</li>
+                            <li>AmbientContext: Confucius's message to Mozi</li>
+                        </ul>
+                    </li>
+                </ol>
+            </div>
+
+            <div class="success-criteria">
+                <strong>✓ Test 5: Empty Addressees (No Response Expected)</strong>
+                <ol>
+                    <li>Philosopher responds with <code>addressees: []</code></li>
+                    <li>Verify: No one is enqueued, dialogue pauses until user intervenes</li>
+                </ol>
+            </div>
+
+            <div class="success-criteria">
+                <strong>✓ Test 6: Multiple Addressees with Batching</strong>
+                <ol>
+                    <li>Confucius addresses [laozi, mozi]</li>
+                    <li>Mencius addresses laozi BEFORE laozi responds</li>
+                    <li>Verify: Laozi responds to BOTH Confucius and Mencius in one turn</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>✅ Success Criteria</h2>
+        <h3>Functional Requirements Met</h3>
+        <ul>
+            <li>✓ Philosophers can specify addressees via JSON <code>addressees</code> field</li>
+            <li>✓ Addressee order determines response order</li>
+            <li>✓ Duplicate queue entries prevented (philosopher stays in original position)</li>
+            <li>✓ Direct messages weighted higher than ambient context in prompts</li>
+            <li>✓ One philosopher speaks at a time (global lock preserved)</li>
+            <li>✓ Philosopher responds to ALL pending messages in one turn (batching preserved)</li>
+            <li>✓ User can still initiate conversations by addressing philosophers</li>
+        </ul>
+
+        <h3>Non-Functional Requirements Met</h3>
+        <ul>
+            <li>✓ Type safety: All new code has proper TypeScript types</li>
+            <li>✓ Backward compatibility: User workflow unchanged</li>
+            <li>✓ Performance: Queue operations are O(n) or better</li>
+            <li>✓ Maintainability: Code is well-commented with clear structure</li>
+            <li>✓ Debuggability: Queue state visible in React DevTools</li>
+        </ul>
+
+        <h3>Documentation Requirements Met</h3>
+        <ul>
+            <li>✓ Inline comments explain queue logic</li>
+            <li>✓ Updated OutputContract in prompt explains addressees field</li>
+            <li>✓ Context structure clearly labeled (Direct vs. Ambient)</li>
+        </ul>
+    </div>
+
+    <div class="section">
+        <h2>📖 Appendix: Key Design Decisions</h2>
+
+        <h3>Why Global Queue Instead of Per-Philosopher Queues?</h3>
+        <p><strong>Problem:</strong> With per-philosopher queues, there's no way to enforce "Laozi then Mozi" order across different queues.</p>
+        <p><strong>Solution:</strong> Single global queue preserves addressee order. When Confucius says <code>["laozi", "mozi"]</code>, we can guarantee Laozi responds before Mozi.</p>
+        <p><strong>Tradeoff:</strong> Slightly more complex deduplication logic, but worth it for order guarantees.</p>
+
+        <h3>Why Separate Direct/Ambient Instead of Single Memory?</h3>
+        <p><strong>Problem:</strong> Without weighting, a philosopher addressed once but overhearing 20 other messages would have diluted attention.</p>
+        <p><strong>Solution:</strong> Explicit <code>&lt;DirectMessages&gt;</code> section with instruction to "focus on these" signals priority.</p>
+        <p><strong>Tradeoff:</strong> More complex prompt structure, but models handle explicit instructions better than implicit weighting.</p>
+
+        <h3>Why Allow Empty Addressees Array?</h3>
+        <p><strong>Problem:</strong> Sometimes a philosopher makes a closing statement that doesn't require response.</p>
+        <p><strong>Solution:</strong> <code>addressees: []</code> means "I'm done speaking, no responses needed." Dialogue pauses until user intervenes.</p>
+        <p><strong>Tradeoff:</strong> Could lead to "stuck" dialogues if philosophers all return empty arrays. Mitigate with prompt engineering ("Usually address at least one peer").</p>
+
+        <h3>Why Preserve Batching (Respond to All Pending)?</h3>
+        <p><strong>Problem:</strong> If Mozi gets addressed 3 times before his turn, should he respond once or three times?</p>
+        <p><strong>Solution:</strong> Respond ONCE to ALL pending messages (current behavior). More natural than fragmented responses.</p>
+        <p><strong>Tradeoff:</strong> Potentially long responses, but that's desirable for comprehensive engagement.</p>
+    </div>
+
+    <div class="section" style="background: rgba(139, 0, 0, 0.08); border-left: 5px solid #8b0000;">
+        <h2>🎯 Ready to Implement?</h2>
+        <p style="font-size: 1.1em;">
+            You now understand the full architecture of the addressee-based queue system. Key takeaways:
+        </p>
+        <ol>
+            <li><strong>Philosophers control dialogue flow</strong> by choosing addressees in their JSON responses</li>
+            <li><strong>Global priority queue</strong> preserves addressee order while preventing duplicates</li>
+            <li><strong>Weighted context</strong> (Direct vs. Ambient) helps philosophers focus on relevant messages</li>
+            <li><strong>Batched responses preserved</strong> - each philosopher responds comprehensively when their turn comes</li>
+        </ol>
+        <p>
+            <strong>Next step:</strong> Begin implementation starting with Step 1 (Type Definitions), proceeding sequentially through each step.
+        </p>
+    </div>
+</body>
+</html>

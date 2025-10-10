@@ -25,6 +25,7 @@ const parseModelResponse = (raw: string) => {
   const fallback = typeof raw === 'string' ? raw.trim() : '';
   let finalText = fallback;
   let reasoning: string | undefined;
+  let addressees: string[] | undefined;
 
   if (typeof raw === 'string') {
     const firstBrace = raw.indexOf('{');
@@ -33,13 +34,21 @@ const parseModelResponse = (raw: string) => {
       const candidate = raw.slice(firstBrace, lastBrace + 1);
       try {
         const parsed = JSON.parse(candidate);
-        const maybeFinal = parsed.final ?? parsed.answer ?? parsed.response ?? parsed.surface;
+        const maybeFinal =
+          parsed.final ?? parsed.answer ?? parsed.response ?? parsed.surface;
         const maybeReasoning = parsed.reasoning ?? parsed.analysis ?? parsed.thinking;
+        const maybeAddressees = parsed.addressees ?? parsed.recipients ?? parsed.to;
+
         if (typeof maybeFinal === 'string' && maybeFinal.trim()) {
           finalText = maybeFinal.trim();
         }
         if (typeof maybeReasoning === 'string' && maybeReasoning.trim()) {
           reasoning = maybeReasoning.trim();
+        }
+        if (Array.isArray(maybeAddressees) && maybeAddressees.length > 0) {
+          addressees = maybeAddressees
+            .filter((a) => typeof a === 'string' && a.trim())
+            .map((a) => a.trim());
         }
       } catch {
         // ignore parse failure, fall back to raw text
@@ -60,7 +69,7 @@ const parseModelResponse = (raw: string) => {
     }
   }
 
-  return { finalText, reasoning };
+  return { finalText, reasoning, addressees };
 };
 
 type HistoryLine = {
@@ -71,9 +80,12 @@ type HistoryLine = {
   phase: Phase;
 };
 
-const buildHistoryLines = (context: AssembledContext, fallbackPhase: Phase): HistoryLine[] => {
+const buildHistoryLines = (
+  context: AssembledContext,
+  fallbackPhase: Phase,
+): HistoryLine[] => {
   if (context.historyEntries && context.historyEntries.length) {
-    return context.historyEntries.map(entry => ({
+    return context.historyEntries.map((entry) => ({
       id: entry.id ?? `history-${entry.timestamp}-${entry.speaker}`,
       timestamp: entry.timestamp,
       speaker: entry.speaker,
@@ -84,7 +96,7 @@ const buildHistoryLines = (context: AssembledContext, fallbackPhase: Phase): His
 
   return context.renderedHistory
     .split('\n')
-    .map(line => line.trim())
+    .map((line) => line.trim())
     .filter(Boolean)
     .map((line, index) => {
       const match = line.match(/^[[]([^\]]+)][\s]+([^→]+)→[\s]+([^:]+)::[\s]+([\s\S]+)$/);
@@ -105,17 +117,21 @@ const buildHistoryLines = (context: AssembledContext, fallbackPhase: Phase): His
 
 const App = () => {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>(() =>
-    mockPhilosophers.map(philosopher => ({ ...philosopher })),
+    mockPhilosophers.map((philosopher) => ({ ...philosopher })),
   );
   const [activeIds, setActiveIds] = useState<string[]>(() =>
-    ['confucius', 'laozi', 'mozi'].filter(id =>
-      mockPhilosophers.some(philosopher => philosopher.id === id),
+    ['confucius', 'laozi', 'mozi'].filter((id) =>
+      mockPhilosophers.some((philosopher) => philosopher.id === id),
     ),
   );
-  const [topic, setTopic] = useState<string>('Water Control Ethics');
+  const [topic, setTopic] = useState<string>('The Way');
   const [sessionDate] = useState<string>(() => new Date().toISOString());
   const [showInsights, setShowInsights] = useState(true);
   const [currentSpeaker, setCurrentSpeaker] = useState<string | null>(null);
+  const [perspectiveMode, setPerspectiveMode] = useState<'moderator' | 'philosopher'>(
+    'moderator',
+  );
+  const [selectedPhilosopherId, setSelectedPhilosopherId] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageEvent[]>([]);
   const [snapshots, setSnapshots] = useState<InspectorSnapshot[]>([]);
   const [activeSnapshotId, setActiveSnapshotId] = useState<string | null>(null);
@@ -135,17 +151,20 @@ const App = () => {
 
   const philosopherMap = useMemo(() => {
     const map = new Map<string, Philosopher>();
-    philosophers.forEach(philosopher => {
+    philosophers.forEach((philosopher) => {
       map.set(philosopher.id, philosopher);
     });
     return map;
   }, [philosophers]);
 
-  const philosopherIds = useMemo(() => philosophers.map(philosopher => philosopher.id), [philosophers]);
+  const philosopherIds = useMemo(
+    () => philosophers.map((philosopher) => philosopher.id),
+    [philosophers],
+  );
 
   const appendEventFeed = useCallback(
     (entry: string, { dedupe = false }: { dedupe?: boolean } = {}) => {
-      setEventFeed(prev => {
+      setEventFeed((prev) => {
         if (dedupe && prev[prev.length - 1] === entry) {
           return prev;
         }
@@ -157,16 +176,16 @@ const App = () => {
   );
 
   const updateQueueDepths = useCallback(() => {
-    setQueueDepths(prev => {
+    setQueueDepths((prev) => {
       const next: Record<string, number> = {};
-      philosopherIds.forEach(id => {
+      philosopherIds.forEach((id) => {
         next[id] = queuesRef.current[id]?.length ?? 0;
       });
       const prevKeys = Object.keys(prev);
       if (prevKeys.length !== philosopherIds.length) {
         return next;
       }
-      const changed = philosopherIds.some(id => prev[id] !== next[id]);
+      const changed = philosopherIds.some((id) => prev[id] !== next[id]);
       return changed ? next : prev;
     });
   }, [philosopherIds]);
@@ -193,7 +212,7 @@ const App = () => {
   const topicRef = useRef(topic);
 
   useEffect(() => {
-    philosopherIds.forEach(id => {
+    philosopherIds.forEach((id) => {
       if (!queuesRef.current[id]) {
         queuesRef.current[id] = [];
       }
@@ -205,14 +224,14 @@ const App = () => {
   }, [philosopherIds, updateQueueDepths]);
 
   useEffect(() => {
-    setMemories(prev => {
+    setMemories((prev) => {
       const nextStore = { ...prev.store };
       let changed = false;
       if (!nextStore.all) {
         nextStore.all = [];
         changed = true;
       }
-      philosopherIds.forEach(id => {
+      philosopherIds.forEach((id) => {
         if (!nextStore[id]) {
           nextStore[id] = [];
           changed = true;
@@ -232,15 +251,19 @@ const App = () => {
     const trigger = task.trigger;
 
     if (trigger.recipients.includes('all')) {
-      philosopherIds.forEach(id => {
+      philosopherIds.forEach((id) => {
         if (id !== task.philosopherId) {
           recipients.add(id);
         }
       });
     }
 
-    trigger.recipients.forEach(recipient => {
-      if (recipient !== 'all' && recipient !== task.philosopherId && philosopherMap.has(recipient)) {
+    trigger.recipients.forEach((recipient) => {
+      if (
+        recipient !== 'all' &&
+        recipient !== task.philosopherId &&
+        philosopherMap.has(recipient)
+      ) {
         recipients.add(recipient);
       }
     });
@@ -256,7 +279,7 @@ const App = () => {
 
   function enqueueTasks(tasks: ResponseTask[]) {
     if (!tasks.length) return;
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       if (!queuesRef.current[task.philosopherId]) {
         queuesRef.current[task.philosopherId] = [];
       }
@@ -271,14 +294,14 @@ const App = () => {
     processedMessagesRef.current.add(message.id);
 
     const targets = new Set<string>();
-    message.recipients.forEach(recipient => {
+    message.recipients.forEach((recipient) => {
       if (recipient !== message.speaker && philosopherMap.has(recipient)) {
         targets.add(recipient);
       }
     });
 
     if (message.recipients.includes('all')) {
-      philosopherIds.forEach(id => {
+      philosopherIds.forEach((id) => {
         if (id !== message.speaker) {
           targets.add(id);
         }
@@ -288,7 +311,7 @@ const App = () => {
     if (targets.size === 0) return;
 
     const now = Date.now();
-    const tasks: ResponseTask[] = Array.from(targets).map(targetId => ({
+    const tasks: ResponseTask[] = Array.from(targets).map((targetId) => ({
       id: `task-${targetId}-${message.id}-${now}-${Math.random().toString(36).slice(2, 6)}`,
       philosopherId: targetId,
       trigger: message,
@@ -299,7 +322,7 @@ const App = () => {
 
   function drainQueues() {
     if (isPausedRef.current) return;
-    philosopherIds.forEach(id => {
+    philosopherIds.forEach((id) => {
       void runQueue(id);
     });
   }
@@ -357,22 +380,29 @@ const App = () => {
 
     // Aggregate all trigger messages
     const uniqueTriggers = Array.from(
-      new Map(tasks.map(t => [t.trigger.id, t.trigger])).values()
+      new Map(tasks.map((t) => [t.trigger.id, t.trigger])).values(),
     );
 
     // Build comprehensive context with ALL messages
     const triggerText = uniqueTriggers
-      .map(t => `[${t.speaker}]: ${t.surface}`)
+      .map((t) => `[${t.speaker}]: ${t.surface}`)
       .join('\n');
 
-    const context = assembleContextForPhilosopher(philosopher, memoriesRef.current, {
-      recipients: uniqueTriggers.flatMap(t => t.recipients),
-      text: triggerText,
-      timestamp: uniqueTriggers[uniqueTriggers.length - 1].timestamp,
-      speaker: uniqueTriggers[uniqueTriggers.length - 1].speaker,
-    });
+    const context = assembleContextForPhilosopher(
+      philosopher,
+      memoriesRef.current,
+      {
+        recipients: uniqueTriggers.flatMap((t) => t.recipients),
+        text: triggerText,
+        timestamp: uniqueTriggers[uniqueTriggers.length - 1].timestamp,
+        speaker: uniqueTriggers[uniqueTriggers.length - 1].speaker,
+      },
+      topicRef.current,
+    );
 
-    appendEventFeed(`${formatTime(new Date().toISOString())} · routing → ${philosopher.name}`);
+    appendEventFeed(
+      `${formatTime(new Date().toISOString())} · routing → ${philosopher.name}`,
+    );
 
     // NEW: Search for relevant philosophical quote
     let quoteData: QuoteData | undefined;
@@ -397,11 +427,18 @@ const App = () => {
         messages: [{ role: 'user', content: enhancedPrompt }],
       });
 
-      const { finalText, reasoning } = parseModelResponse(response.content);
+      const { finalText, reasoning, addressees } = parseModelResponse(response.content);
 
-      // Determine recipients: all speakers who sent messages + moderator
-      const allSpeakers = new Set(uniqueTriggers.map(t => t.speaker));
-      const replyRecipients = Array.from(allSpeakers).concat(['moderator']);
+      // Determine recipients: use addressees from response if provided, otherwise fall back to speakers + moderator
+      let replyRecipients: string[];
+      if (addressees && addressees.length > 0) {
+        // Use addressees from philosopher's response, adding moderator
+        replyRecipients = [...addressees, 'moderator'];
+      } else {
+        // Fallback: all speakers who sent messages + moderator
+        const allSpeakers = new Set(uniqueTriggers.map((t) => t.speaker));
+        replyRecipients = Array.from(allSpeakers).concat(['moderator']);
+      }
 
       const replyTimestamp = new Date().toISOString();
       const replyMessage: MessageEvent = {
@@ -417,19 +454,19 @@ const App = () => {
         translations: { english: finalText },
       };
 
-      setMessages(prev => [...prev, replyMessage]);
+      setMessages((prev) => [...prev, replyMessage]);
       appendEventFeed(
         `${formatTime(replyTimestamp)} · ${philosopher.name} → ${replyRecipients.join(', ')}`,
       );
 
-      setMemories(prev => {
+      setMemories((prev) => {
         const next = pushMemoryEntry(prev, replyMessage);
         memoriesRef.current = next;
         return next;
       });
 
       const historyLines = buildHistoryLines(context, currentPhase);
-      const contextMessages = historyLines.map(line => ({
+      const contextMessages = historyLines.map((line) => ({
         id: line.id,
         speaker: line.speaker,
         phase: line.phase,
@@ -463,7 +500,7 @@ const App = () => {
         },
       };
 
-      setSnapshots(prev => [...prev, snapshot]);
+      setSnapshots((prev) => [...prev, snapshot]);
 
       enqueueResponsesFromMessage(replyMessage);
     } catch (error) {
@@ -480,14 +517,21 @@ const App = () => {
     const philosopher = philosopherMap.get(task.philosopherId);
     if (!philosopher) return;
 
-    const context = assembleContextForPhilosopher(philosopher, memoriesRef.current, {
-      recipients: task.trigger.recipients,
-      text: task.trigger.surface,
-      timestamp: task.trigger.timestamp,
-      speaker: task.trigger.speaker,
-    });
+    const context = assembleContextForPhilosopher(
+      philosopher,
+      memoriesRef.current,
+      {
+        recipients: task.trigger.recipients,
+        text: task.trigger.surface,
+        timestamp: task.trigger.timestamp,
+        speaker: task.trigger.speaker,
+      },
+      topicRef.current,
+    );
 
-    appendEventFeed(`${formatTime(new Date().toISOString())} · routing → ${philosopher.name}`);
+    appendEventFeed(
+      `${formatTime(new Date().toISOString())} · routing → ${philosopher.name}`,
+    );
 
     try {
       const response = await sendMessageToBackend({
@@ -509,12 +553,12 @@ const App = () => {
         translations: { english: finalText },
       };
 
-      setMessages(prev => [...prev, replyMessage]);
+      setMessages((prev) => [...prev, replyMessage]);
       appendEventFeed(
         `${formatTime(replyTimestamp)} · ${philosopher.name} → ${replyRecipients.join(', ')}`,
       );
 
-      setMemories(prev => {
+      setMemories((prev) => {
         const next = pushMemoryEntry(prev, replyMessage);
         memoriesRef.current = next;
         return next;
@@ -522,7 +566,7 @@ const App = () => {
 
       const historyLines = buildHistoryLines(context, currentPhase);
 
-      const contextMessages = historyLines.map(line => ({
+      const contextMessages = historyLines.map((line) => ({
         id: line.id,
         speaker: line.speaker,
         phase: line.phase,
@@ -556,7 +600,7 @@ const App = () => {
         },
       };
 
-      setSnapshots(prev => [...prev, snapshot]);
+      setSnapshots((prev) => [...prev, snapshot]);
 
       enqueueResponsesFromMessage(replyMessage);
     } catch (error) {
@@ -573,7 +617,9 @@ const App = () => {
   }, [updateQueueDepths]);
 
   useEffect(() => {
-    healthCheck().then(setBackendHealthy).catch(() => setBackendHealthy(false));
+    healthCheck()
+      .then(setBackendHealthy)
+      .catch(() => setBackendHealthy(false));
   }, []);
 
   useEffect(() => {
@@ -592,13 +638,13 @@ const App = () => {
   }, [topic]);
 
   const roster = useMemo(
-    () => philosophers.filter(philosopher => activeIds.includes(philosopher.id)),
+    () => philosophers.filter((philosopher) => activeIds.includes(philosopher.id)),
     [philosophers, activeIds],
   );
 
   const toggleActive = (id: string) => {
-    setActiveIds(prev =>
-      prev.includes(id) ? prev.filter(entry => entry !== id) : [...prev, id],
+    setActiveIds((prev) =>
+      prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id],
     );
   };
 
@@ -618,10 +664,10 @@ const App = () => {
       translations: { english: trimmed },
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     appendEventFeed(`${formatTime(timestamp)} · moderator → ${recipients.join(', ')}`);
 
-    setMemories(prev => {
+    setMemories((prev) => {
       const next = pushMemoryEntry(prev, userMessage);
       memoriesRef.current = next;
       return next;
@@ -631,17 +677,21 @@ const App = () => {
   };
 
   const handleAddPhilosopher = (philosopher: Philosopher) => {
-    setPhilosophers(prev => [...prev, philosopher]);
-    setActiveIds(prev => (prev.includes(philosopher.id) ? prev : [...prev, philosopher.id]));
-    setQueueDepths(prev => ({
+    setPhilosophers((prev) => [...prev, philosopher]);
+    setActiveIds((prev) =>
+      prev.includes(philosopher.id) ? prev : [...prev, philosopher.id],
+    );
+    setQueueDepths((prev) => ({
       ...prev,
       [philosopher.id]: queuesRef.current[philosopher.id]?.length ?? 0,
     }));
-    appendEventFeed(`${formatTime(new Date().toISOString())} · system → ${philosopher.name} joined`);
+    appendEventFeed(
+      `${formatTime(new Date().toISOString())} · system → ${philosopher.name} joined`,
+    );
   };
 
   const handleTogglePause = () => {
-    setIsPaused(prev => {
+    setIsPaused((prev) => {
       const next = !prev;
       const label = next ? 'auto-responses paused' : 'auto-responses resumed';
       appendEventFeed(`${formatTime(new Date().toISOString())} · system → ${label}`, {
@@ -655,13 +705,15 @@ const App = () => {
     <div className="app-shell">
       <HeaderBand
         inspectorOpen={inspectorOpen}
-        onToggleInspector={() => setInspectorOpen(prev => !prev)}
+        onToggleInspector={() => setInspectorOpen((prev) => !prev)}
         backendHealthy={backendHealthy}
         isPaused={isPaused}
         onTogglePause={handleTogglePause}
       />
 
-      <div className="main-frame">
+      <div
+        className={`main-frame ${perspectiveMode === 'philosopher' ? 'with-philosopher-view' : ''}`}
+      >
         <SideColumn
           philosophers={philosophers}
           activeIds={activeIds}
@@ -684,6 +736,10 @@ const App = () => {
             participants={philosophers}
             showInsights={showInsights}
             currentSpeaker={currentSpeaker}
+            perspectiveMode={perspectiveMode}
+            selectedPhilosopherId={selectedPhilosopherId}
+            onPerspectiveModeChange={setPerspectiveMode}
+            onPhilosopherSelect={setSelectedPhilosopherId}
             onSendPrompt={handlePrompt}
           />
 
@@ -696,6 +752,17 @@ const App = () => {
             onClose={() => setInspectorOpen(false)}
           />
         </section>
+
+        {perspectiveMode === 'philosopher' && selectedPhilosopherId && (
+          <PhilosopherViewSidebar
+            philosopherId={selectedPhilosopherId}
+            philosopher={philosophers.find((p) => p.id === selectedPhilosopherId)!}
+            messages={messages}
+            participants={philosophers}
+            showInsights={showInsights}
+            onClose={() => setPerspectiveMode('moderator')}
+          />
+        )}
       </div>
     </div>
   );
@@ -766,7 +833,9 @@ const SideColumn = ({
   onAddPhilosopher: (philosopher: Philosopher) => void;
 }) => {
   const [activeTab, setActiveTab] = useState<'roster' | 'controls' | 'events'>('roster');
-  const selected = philosophers.filter(philosopher => activeIds.includes(philosopher.id));
+  const selected = philosophers.filter((philosopher) =>
+    activeIds.includes(philosopher.id),
+  );
 
   return (
     <aside className="roster-column">
@@ -798,7 +867,7 @@ const SideColumn = ({
         {activeTab === 'roster' && (
           <>
             <div className="toggle-bar">
-              {philosophers.map(philosopher => (
+              {philosophers.map((philosopher) => (
                 <button
                   key={philosopher.id}
                   className={`pill ${activeIds.includes(philosopher.id) ? 'active' : ''}`}
@@ -820,7 +889,7 @@ const SideColumn = ({
               </div>
             )}
 
-            {selected.map(philosopher => (
+            {selected.map((philosopher) => (
               <div key={philosopher.id} className="card">
                 <header>
                   <span>{philosopher.name}</span>
@@ -873,12 +942,15 @@ const SideColumn = ({
                   Hide reasoning
                 </button>
               </div>
-              <p>Toggle whether internal reasoning appears alongside each reply in the transcript.</p>
+              <p>
+                Toggle whether internal reasoning appears alongside each reply in the
+                transcript.
+              </p>
             </div>
 
             <AddParticipantCard
               onAdd={onAddPhilosopher}
-              existingIds={new Set(philosophers.map(philosopher => philosopher.id))}
+              existingIds={new Set(philosophers.map((philosopher) => philosopher.id))}
             />
           </>
         )}
@@ -922,9 +994,10 @@ const AddParticipantCard = ({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '');
 
-  const handleChange = (field: keyof typeof form) =>
+  const handleChange =
+    (field: keyof typeof form) =>
     (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      setForm(prev => ({ ...prev, [field]: event.target.value }));
+      setForm((prev) => ({ ...prev, [field]: event.target.value }));
     };
 
   const handleSubmit = () => {
@@ -960,7 +1033,14 @@ const AddParticipantCard = ({
     };
 
     onAdd(newPhilosopher);
-    setForm({ name: '', id: '', school: '', port: '', personaSummary: '', personaTemplate: '' });
+    setForm({
+      name: '',
+      id: '',
+      school: '',
+      port: '',
+      personaSummary: '',
+      personaTemplate: '',
+    });
     setError(null);
   };
 
@@ -980,7 +1060,11 @@ const AddParticipantCard = ({
         </label>
         <label>
           <span>School / Tradition</span>
-          <input value={form.school} onChange={handleChange('school')} placeholder="儒家" />
+          <input
+            value={form.school}
+            onChange={handleChange('school')}
+            placeholder="儒家"
+          />
         </label>
         <label>
           <span>Port</span>
@@ -1018,6 +1102,10 @@ const DialogueStream = ({
   participants,
   showInsights,
   currentSpeaker,
+  perspectiveMode,
+  selectedPhilosopherId,
+  onPerspectiveModeChange,
+  onPhilosopherSelect,
   onSendPrompt,
 }: {
   topic: string;
@@ -1027,17 +1115,24 @@ const DialogueStream = ({
   participants: Philosopher[];
   showInsights: boolean;
   currentSpeaker: string | null;
+  perspectiveMode: 'moderator' | 'philosopher';
+  selectedPhilosopherId: string | null;
+  onPerspectiveModeChange: (mode: 'moderator' | 'philosopher') => void;
+  onPhilosopherSelect: (id: string | null) => void;
   onSendPrompt: (submission: ComposerSubmission) => void;
 }) => {
   const speakerName = currentSpeaker
-    ? participants.find(p => p.id === currentSpeaker)?.name || currentSpeaker
+    ? participants.find((p) => p.id === currentSpeaker)?.name || currentSpeaker
     : null;
+
   return (
     <>
       <div className="dialogue-header">
         <div>
           <h3>Dialogue Stream</h3>
-          <span className="dialogue-topic">Topic: {topic} · {date}</span>
+          <span className="dialogue-topic">
+            Topic: {topic} · {date}
+          </span>
         </div>
         <div className="dialogue-meta">
           {speakerName ? (
@@ -1048,21 +1143,157 @@ const DialogueStream = ({
         </div>
       </div>
 
+      {/* Perspective Selector */}
+      <div className="perspective-selector">
+        <div className="toggle-bar">
+          <button
+            className={`pill ${perspectiveMode === 'moderator' ? 'active' : ''}`}
+            onClick={() => onPerspectiveModeChange('moderator')}
+            type="button"
+          >
+            Moderator View
+          </button>
+          <button
+            className={`pill ${perspectiveMode === 'philosopher' ? 'active' : ''}`}
+            onClick={() => {
+              onPerspectiveModeChange('philosopher');
+              if (!selectedPhilosopherId && roster.length > 0) {
+                onPhilosopherSelect(roster[0].id);
+              }
+            }}
+            type="button"
+          >
+            Open Philosopher View →
+          </button>
+        </div>
+        {perspectiveMode === 'philosopher' && (
+          <select
+            value={selectedPhilosopherId || ''}
+            onChange={(e) => onPhilosopherSelect(e.target.value)}
+            className="philosopher-select"
+          >
+            {roster.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.name}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
       <ol className="message-list">
-        {messages.map(message => (
+        {messages.map((message) => (
           <MessageCard
             key={message.id}
             message={message}
             showInsights={showInsights}
             participants={participants}
+            highlightReasoning={false}
           />
         ))}
         {messages.length === 0 && (
-          <li className="message">
-            <div className="meta">
-              <span>Waiting for events…</span>
+          <li className="welcome-message">
+            <div className="welcome-header">
+              <h2>🏮 Welcome to Confucian Café 🏮</h2>
+              <p className="welcome-subtitle">
+                Where ancient wisdom meets modern dialogue
+              </p>
             </div>
-            <p>Mock SSE will stream sample dialogue in a moment.</p>
+
+            <div className="welcome-section">
+              <h3>✨ What is this place?</h3>
+              <p>
+                Step into a philosophical tea house where great thinkers of ancient China
+                gather to debate, discuss, and deliberate on the pressing matters of
+                governance, ethics, and society. Each philosopher brings their unique
+                perspective—from Confucius's ritual propriety to Laozi's water-like
+                wisdom, from Mozi's utilitarian calculations to the diverse Confucian
+                voices of Mencius and Xunzi.
+              </p>
+            </div>
+
+            <div className="welcome-section">
+              <h3>🎭 How does it work?</h3>
+              <ul className="welcome-list">
+                <li>
+                  <strong>Sequential Dialogue:</strong> Only one philosopher speaks at a
+                  time—just like a real council meeting! Each thinker processes all
+                  pending questions before responding comprehensively.
+                </li>
+                <li>
+                  <strong>Perspective Views:</strong> Toggle between Moderator View (see
+                  everything) and Philosopher View (experience the dialogue from a single
+                  philosopher's first-person perspective).
+                </li>
+                <li>
+                  <strong>Internal Reasoning:</strong> Enable "Show reasoning" in Controls
+                  to peek behind the curtain and see how each philosopher thinks through
+                  their responses.
+                </li>
+                <li>
+                  <strong>Topic-Driven:</strong> Set any topic you wish to explore—from
+                  flood control to education reform, from virtue ethics to political
+                  legitimacy.
+                </li>
+              </ul>
+            </div>
+
+            <div className="welcome-section">
+              <h3>🚀 Getting Started</h3>
+              <ol className="welcome-list">
+                <li>
+                  Choose your <strong>Roster</strong> in the left panel—select which
+                  philosophers join the discussion
+                </li>
+                <li>
+                  Set your <strong>Topic</strong> in the Controls tab—what should they
+                  debate?
+                </li>
+                <li>
+                  Address the philosophers below—select one, some, or the entire council
+                </li>
+                <li>
+                  Watch the dialogue unfold as each thinker responds in their unique voice
+                </li>
+                <li>
+                  Switch to <strong>Philosopher View</strong> above to experience the
+                  conversation from their eyes
+                </li>
+              </ol>
+            </div>
+
+            <div className="welcome-section">
+              <h3>💡 Pro Tips</h3>
+              <ul className="welcome-list">
+                <li>
+                  Ask philosophers to <strong>respond to each other</strong>{' '}
+                  directly—they'll cite and critique!
+                </li>
+                <li>
+                  Use the <strong>Inspector</strong> (top-right button) to see the exact
+                  prompts sent to each agent
+                </li>
+                <li>
+                  Watch the <strong>Events</strong> tab to track the routing and timing of
+                  each response
+                </li>
+                <li>
+                  Try <strong>adding new participants</strong>—bring in other voices from
+                  Chinese philosophy!
+                </li>
+                <li>
+                  <strong>Pause auto-responses</strong> if you want to read and reflect
+                  before the next turn
+                </li>
+              </ul>
+            </div>
+
+            <div className="welcome-footer">
+              <p>
+                Ready to begin? Compose your first prompt below, select your recipients,
+                and let the philosophical discourse commence! 🍵
+              </p>
+            </div>
           </li>
         )}
       </ol>
@@ -1076,25 +1307,27 @@ const MessageCard = ({
   message,
   showInsights,
   participants,
+  highlightReasoning = false,
 }: {
   message: MessageEvent;
   showInsights: boolean;
   participants: Philosopher[];
+  highlightReasoning?: boolean;
 }) => {
-  const speaker = participants.find(philosopher => philosopher.id === message.speaker);
-  const recipientLabels = message.recipients.map(recipient => {
+  const speaker = participants.find((philosopher) => philosopher.id === message.speaker);
+  const recipientLabels = message.recipients.map((recipient) => {
     if (recipient === 'moderator') {
       return 'moderator';
     }
-    const match = participants.find(philosopher => philosopher.id === recipient);
+    const match = participants.find((philosopher) => philosopher.id === recipient);
     return match?.name || recipient;
   });
 
   return (
-    <li className="message">
+    <li className={`message ${highlightReasoning ? 'own-message' : ''}`}>
       <div className="meta">
         <span>
-          {(speaker?.name || message.speaker)} · {formatTime(message.timestamp)} · →{' '}
+          {speaker?.name || message.speaker} · {formatTime(message.timestamp)} · →{' '}
           {recipientLabels.join(', ')}
         </span>
       </div>
@@ -1107,7 +1340,13 @@ const MessageCard = ({
           <cite className="quote-source">— {message.quote.source}</cite>
         </details>
       )}
-      {showInsights && message.insight && (
+      {highlightReasoning && message.insight && (
+        <details className="insight reasoning-highlight" open>
+          <summary>🧠 My Internal Reasoning</summary>
+          <p>{message.insight}</p>
+        </details>
+      )}
+      {showInsights && !highlightReasoning && message.insight && (
         <details className="insight" open>
           <summary>Internal thoughts</summary>
           <p>{message.insight}</p>
@@ -1128,11 +1367,13 @@ const PromptComposer = ({
   const [recipients, setRecipients] = useState<string[]>(['confucius', 'laozi', 'mozi']);
 
   useEffect(() => {
-    setRecipients(prev => {
-      const valid = prev.filter(id => roster.some(philosopher => philosopher.id === id));
+    setRecipients((prev) => {
+      const valid = prev.filter((id) =>
+        roster.some((philosopher) => philosopher.id === id),
+      );
       const missing = roster
-        .map(philosopher => philosopher.id)
-        .filter(id => !valid.includes(id));
+        .map((philosopher) => philosopher.id)
+        .filter((id) => !valid.includes(id));
       if (
         missing.length === 0 &&
         valid.length === prev.length &&
@@ -1145,13 +1386,13 @@ const PromptComposer = ({
   }, [roster]);
 
   const toggleRecipient = (id: string) => {
-    setRecipients(prev =>
-      prev.includes(id) ? prev.filter(entry => entry !== id) : [...prev, id],
+    setRecipients((prev) =>
+      prev.includes(id) ? prev.filter((entry) => entry !== id) : [...prev, id],
     );
   };
 
   const selectAll = () => {
-    const allIds = roster.map(philosopher => philosopher.id);
+    const allIds = roster.map((philosopher) => philosopher.id);
     setRecipients(allIds);
   };
 
@@ -1160,16 +1401,27 @@ const PromptComposer = ({
     setPrompt('');
   };
 
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      if (!disableSubmit) {
+        handleSubmit();
+      }
+    }
+  };
+
   const disableSubmit = prompt.trim().length === 0 || recipients.length === 0;
 
   return (
     <div className="prompt-composer">
       <label>
         <strong>User Prompt Composer</strong>
+        <span className="keyboard-hint">Enter to send · Shift+Enter for new line</span>
       </label>
       <textarea
         value={prompt}
-        onChange={event => setPrompt(event.target.value)}
+        onChange={(event) => setPrompt(event.target.value)}
+        onKeyDown={handleKeyDown}
         placeholder="Address one or more philosophers by name, pose a question, or request synthesis…"
       />
       <div className="actions">
@@ -1177,7 +1429,7 @@ const PromptComposer = ({
           <button className={`pill`} onClick={selectAll} type="button">
             Address entire council
           </button>
-          {roster.map(philosopher => (
+          {roster.map((philosopher) => (
             <button
               key={philosopher.id}
               className={`pill ${recipients.includes(philosopher.id) ? 'active' : ''}`}
@@ -1188,7 +1440,12 @@ const PromptComposer = ({
             </button>
           ))}
         </div>
-        <button className="primary-button" onClick={handleSubmit} disabled={disableSubmit} type="button">
+        <button
+          className="primary-button"
+          onClick={handleSubmit}
+          disabled={disableSubmit}
+          type="button"
+        >
           Send Prompt
         </button>
       </div>
@@ -1218,7 +1475,7 @@ const InspectorDrawer = ({
   );
 
   const activeSnapshot =
-    orderedSnapshots.find(snapshot => snapshot.id === activeSnapshotId) ||
+    orderedSnapshots.find((snapshot) => snapshot.id === activeSnapshotId) ||
     orderedSnapshots[orderedSnapshots.length - 1];
 
   return (
@@ -1234,11 +1491,14 @@ const InspectorDrawer = ({
       </div>
 
       {orderedSnapshots.length === 0 ? (
-        <p>No context snapshots yet. They will appear once the moderator prepares the first prompt.</p>
+        <p>
+          No context snapshots yet. They will appear once the moderator prepares the first
+          prompt.
+        </p>
       ) : (
         <div className="drawer-content">
           <div className="snapshot-selector">
-            {orderedSnapshots.map(snapshot => (
+            {orderedSnapshots.map((snapshot) => (
               <button
                 key={snapshot.id}
                 className={`pill ${snapshot.id === activeSnapshot?.id ? 'active' : ''}`}
@@ -1267,8 +1527,8 @@ const SnapshotDetails = ({
   messages: MessageEvent[];
 }) => {
   const recordedAt = new Date(snapshot.timestamp).toLocaleString();
-  const messageMap = new Map(messages.map(message => [message.id, message]));
-  const missing = snapshot.contextMessages.filter(entry => !messageMap.has(entry.id));
+  const messageMap = new Map(messages.map((message) => [message.id, message]));
+  const missing = snapshot.contextMessages.filter((entry) => !messageMap.has(entry.id));
   const latestExchange = snapshot.callPayload?.latest ?? null;
 
   const downloadText = (text: string, filename: string) => {
@@ -1319,7 +1579,9 @@ const SnapshotDetails = ({
       <div className="inspector-actions">
         <button
           className="ghost-button"
-          onClick={() => downloadText(snapshot.prompt.rendered, `${snapshot.id}_prompt.txt`)}
+          onClick={() =>
+            downloadText(snapshot.prompt.rendered, `${snapshot.id}_prompt.txt`)
+          }
           type="button"
         >
           Download prompt
@@ -1337,13 +1599,15 @@ const SnapshotDetails = ({
 
       <div>
         <strong>Instantiated Prompt</strong>
-        <pre className="code-block">{snapshot.prompt.rendered}</pre>
+        <XMLViewer xml={snapshot.prompt.rendered} />
       </div>
 
       {snapshot.callPayload && (
         <details className="insight">
           <summary>Call payload</summary>
-          <pre className="code-block">{JSON.stringify(snapshot.callPayload, null, 2)}</pre>
+          <pre className="code-block">
+            {JSON.stringify(snapshot.callPayload, null, 2)}
+          </pre>
         </details>
       )}
 
@@ -1359,8 +1623,8 @@ const AgentLens = ({
   snapshot: InspectorSnapshot;
   messages: MessageEvent[];
 }) => {
-  const messageMap = new Map(messages.map(message => [message.id, message]));
-  const pending = snapshot.contextMessages.filter(entry => !messageMap.has(entry.id));
+  const messageMap = new Map(messages.map((message) => [message.id, message]));
+  const pending = snapshot.contextMessages.filter((entry) => !messageMap.has(entry.id));
 
   return (
     <section>
@@ -1378,7 +1642,7 @@ const AgentLens = ({
             <div>No prior statements; the agent only receives the user prompt.</div>
           </li>
         )}
-        {snapshot.contextMessages.map(entry => (
+        {snapshot.contextMessages.map((entry) => (
           <li key={entry.id}>
             <div className="meta">
               {entry.speaker} · {formatTime(entry.timestamp)}
@@ -1388,5 +1652,362 @@ const AgentLens = ({
         ))}
       </ul>
     </section>
+  );
+};
+
+const XMLViewer = ({ xml }: { xml: string }) => {
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+
+  const toggleSection = (path: string) => {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(path)) {
+        next.delete(path);
+      } else {
+        next.add(path);
+      }
+      return next;
+    });
+  };
+
+  // Parse XML into a tree structure
+  const parseXML = (xmlString: string) => {
+    const tagRegex = /<(\/?)([\w-]+)([^>]*)>/g;
+    const cdataRegex = /<!\[CDATA\[([\s\S]*?)\]\]>/g;
+
+    const nodes: Array<{
+      type: 'open' | 'close' | 'text' | 'cdata';
+      tag?: string;
+      attrs?: string;
+      content?: string;
+      indent: number;
+    }> = [];
+
+    let lastIndex = 0;
+    let match;
+    let depth = 0;
+
+    // Replace CDATA sections temporarily
+    const cdataPlaceholders: string[] = [];
+    const xmlWithoutCDATA = xmlString.replace(cdataRegex, (_, content) => {
+      const placeholder = `__CDATA_${cdataPlaceholders.length}__`;
+      cdataPlaceholders.push(content);
+      return placeholder;
+    });
+
+    while ((match = tagRegex.exec(xmlWithoutCDATA)) !== null) {
+      // Get text before this tag
+      if (match.index > lastIndex) {
+        const text = xmlWithoutCDATA.slice(lastIndex, match.index).trim();
+        if (text) {
+          // Check if this is a CDATA placeholder
+          const cdataMatch = text.match(/__CDATA_(\d+)__/);
+          if (cdataMatch) {
+            const cdataContent = cdataPlaceholders[parseInt(cdataMatch[1])];
+            nodes.push({ type: 'cdata', content: cdataContent, indent: depth });
+          } else {
+            nodes.push({ type: 'text', content: text, indent: depth });
+          }
+        }
+      }
+
+      const [, closingSlash, tagName, attrs] = match;
+
+      if (closingSlash) {
+        // Closing tag
+        depth--;
+        nodes.push({ type: 'close', tag: tagName, indent: depth });
+      } else {
+        // Opening tag
+        nodes.push({ type: 'open', tag: tagName, attrs: attrs.trim(), indent: depth });
+        depth++;
+      }
+
+      lastIndex = match.index + match[0].length;
+    }
+
+    return nodes;
+  };
+
+  const nodes = parseXML(xml);
+  let nodeIndex = 0;
+
+  const renderNode = (path: string = ''): JSX.Element[] => {
+    const elements: JSX.Element[] = [];
+
+    while (nodeIndex < nodes.length) {
+      const node = nodes[nodeIndex];
+
+      if (node.type === 'close') {
+        nodeIndex++;
+        return elements;
+      }
+
+      if (node.type === 'open') {
+        const currentPath = `${path}/${node.tag}`;
+        const isExpanded = expanded.has(currentPath);
+        const openNodeIndex = nodeIndex;
+        nodeIndex++;
+
+        // Find matching close tag
+        let depth = 1;
+        let closeIndex = nodeIndex;
+        while (closeIndex < nodes.length && depth > 0) {
+          if (nodes[closeIndex].type === 'open') depth++;
+          if (nodes[closeIndex].type === 'close') depth--;
+          closeIndex++;
+        }
+
+        const hasChildren = closeIndex - nodeIndex > 1;
+
+        elements.push(
+          <div
+            key={currentPath}
+            className="xml-node"
+            style={{ marginLeft: `${node.indent * 16}px` }}
+          >
+            <div className="xml-tag-line">
+              {hasChildren && (
+                <button
+                  className="xml-toggle"
+                  onClick={() => toggleSection(currentPath)}
+                  type="button"
+                >
+                  {isExpanded ? '▼' : '▶'}
+                </button>
+              )}
+              <span className="xml-tag-open">
+                {'<'}
+                <span className="xml-tag-name">{node.tag}</span>
+                {node.attrs && <span className="xml-attrs"> {node.attrs}</span>}
+                {'>'}
+              </span>
+            </div>
+
+            {isExpanded && hasChildren && (
+              <div className="xml-children">{renderNode(currentPath)}</div>
+            )}
+
+            {!isExpanded && hasChildren && <span className="xml-collapsed">...</span>}
+
+            <div className="xml-tag-line" style={{ marginLeft: `${node.indent * 16}px` }}>
+              <span className="xml-tag-close">
+                {'</'}
+                <span className="xml-tag-name">{node.tag}</span>
+                {'>'}
+              </span>
+            </div>
+          </div>,
+        );
+
+        if (!isExpanded) {
+          // Skip to closing tag
+          nodeIndex = closeIndex;
+        }
+      } else if (node.type === 'text') {
+        elements.push(
+          <div
+            key={`text-${nodeIndex}`}
+            className="xml-text"
+            style={{ marginLeft: `${(node.indent + 1) * 16}px` }}
+          >
+            {node.content}
+          </div>,
+        );
+        nodeIndex++;
+      } else if (node.type === 'cdata') {
+        elements.push(
+          <details
+            key={`cdata-${nodeIndex}`}
+            className="xml-cdata"
+            style={{ marginLeft: `${(node.indent + 1) * 16}px` }}
+          >
+            <summary>CDATA Content</summary>
+            <pre>{node.content}</pre>
+          </details>,
+        );
+        nodeIndex++;
+      }
+    }
+
+    return elements;
+  };
+
+  return (
+    <div className="xml-viewer">
+      <div className="xml-controls">
+        <button
+          className="xml-control-button"
+          onClick={() =>
+            setExpanded(
+              new Set(
+                nodes
+                  .filter((n) => n.type === 'open')
+                  .map((_, i) => `/${nodes.filter((n) => n.type === 'open')[i].tag}`),
+              ),
+            )
+          }
+          type="button"
+        >
+          Expand All
+        </button>
+        <button
+          className="xml-control-button"
+          onClick={() => setExpanded(new Set())}
+          type="button"
+        >
+          Collapse All
+        </button>
+      </div>
+      <div className="xml-content">{renderNode()}</div>
+    </div>
+  );
+};
+
+const PhilosopherViewSidebar = ({
+  philosopherId,
+  philosopher,
+  messages,
+  participants,
+  showInsights,
+  onClose,
+}: {
+  philosopherId: string;
+  philosopher: Philosopher;
+  messages: MessageEvent[];
+  participants: Philosopher[];
+  showInsights: boolean;
+  onClose: () => void;
+}) => {
+  // Direct messages: addressed to this philosopher
+  const directMessages = messages.filter(
+    (msg) =>
+      msg.recipients.includes(philosopherId) ||
+      msg.recipients.includes('all') ||
+      msg.speaker === philosopherId,
+  );
+
+  // General chit-chat: messages not addressed to this philosopher
+  const chitChatMessages = messages.filter(
+    (msg) =>
+      !msg.recipients.includes(philosopherId) &&
+      !msg.recipients.includes('all') &&
+      msg.speaker !== philosopherId,
+  );
+
+  return (
+    <aside className="philosopher-sidebar">
+      <div className="philosopher-sidebar-header">
+        <div>
+          <h3>👁️ {philosopher.name}'s View</h3>
+          <p className="philosopher-subtitle">First-person perspective</p>
+        </div>
+        <button className="close-button" onClick={onClose} type="button">
+          ✕
+        </button>
+      </div>
+
+      <div className="philosopher-info-card">
+        <strong>{philosopher.name}</strong>
+        <p className="school-badge">{philosopher.school}</p>
+        <p className="persona-text">{philosopher.personaSummary}</p>
+      </div>
+
+      <div className="philosopher-content">
+        {/* Direct Messages Section */}
+        <section className="message-section">
+          <div className="section-header">
+            <h4>📨 Direct Messages</h4>
+            <span className="message-count">{directMessages.length}</span>
+          </div>
+          <p className="section-description">
+            Messages addressed to you, broadcast to all, or sent by you
+          </p>
+          <ol className="sidebar-message-list">
+            {directMessages.length === 0 ? (
+              <li className="empty-state">No direct messages yet</li>
+            ) : (
+              directMessages.map((message) => (
+                <PhilosopherMessageCard
+                  key={message.id}
+                  message={message}
+                  participants={participants}
+                  showInsights={showInsights}
+                  isOwnMessage={message.speaker === philosopherId}
+                />
+              ))
+            )}
+          </ol>
+        </section>
+
+        {/* General Chit-Chat Section */}
+        <section className="message-section">
+          <div className="section-header">
+            <h4>💬 General Chit-Chat</h4>
+            <span className="message-count">{chitChatMessages.length}</span>
+          </div>
+          <p className="section-description">
+            Conversations between others that you can overhear
+          </p>
+          <ol className="sidebar-message-list">
+            {chitChatMessages.length === 0 ? (
+              <li className="empty-state">No general conversations yet</li>
+            ) : (
+              chitChatMessages.map((message) => (
+                <PhilosopherMessageCard
+                  key={message.id}
+                  message={message}
+                  participants={participants}
+                  showInsights={false}
+                  isOwnMessage={false}
+                />
+              ))
+            )}
+          </ol>
+        </section>
+      </div>
+    </aside>
+  );
+};
+
+const PhilosopherMessageCard = ({
+  message,
+  participants,
+  showInsights,
+  isOwnMessage,
+}: {
+  message: MessageEvent;
+  participants: Philosopher[];
+  showInsights: boolean;
+  isOwnMessage: boolean;
+}) => {
+  const speaker = participants.find((p) => p.id === message.speaker);
+  const recipientLabels = message.recipients.map((recipient) => {
+    if (recipient === 'moderator') return 'moderator';
+    const match = participants.find((p) => p.id === recipient);
+    return match?.name || recipient;
+  });
+
+  return (
+    <li className={`sidebar-message ${isOwnMessage ? 'own-message' : ''}`}>
+      <div className="message-meta">
+        <span className="speaker-name">{speaker?.name || message.speaker}</span>
+        <span className="timestamp">{formatTime(message.timestamp)}</span>
+      </div>
+      <div className="message-recipients">→ {recipientLabels.join(', ')}</div>
+      <p className="message-text">{message.surface}</p>
+      {isOwnMessage && message.insight && (
+        <details className="sidebar-insight" open>
+          <summary>🧠 My Reasoning</summary>
+          <p>{message.insight}</p>
+        </details>
+      )}
+      {showInsights && !isOwnMessage && message.insight && (
+        <details className="sidebar-insight">
+          <summary>Internal thoughts</summary>
+          <p>{message.insight}</p>
+        </details>
+      )}
+    </li>
   );
 };
