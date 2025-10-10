@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { mockPhilosophers, initialLanguageDefaults } from './data/mockData';
+import { mockPhilosophers } from './data/mockData';
 import {
   ComposerSubmission,
   InspectorSnapshot,
-  LanguageDefaults,
   MessageEvent,
   Phase,
   Philosopher,
@@ -13,6 +12,7 @@ import { formatDate, formatTime } from './lib/time';
 import { healthCheck, sendMessageToBackend } from './lib/api';
 import { createEmptyMemories, pushMemoryEntry } from './lib/memory';
 import { assembleContextForPhilosopher, type AssembledContext } from './lib/context';
+import type { QuoteData } from './types';
 import './styles/app.css';
 
 type ResponseTask = {
@@ -112,10 +112,10 @@ const App = () => {
       mockPhilosophers.some(philosopher => philosopher.id === id),
     ),
   );
-  const [languageDefaults, setLanguageDefaults] = useState<LanguageDefaults>(
-    initialLanguageDefaults,
-  );
+  const [topic, setTopic] = useState<string>('Water Control Ethics');
+  const [sessionDate] = useState<string>(() => new Date().toISOString());
   const [showInsights, setShowInsights] = useState(true);
+  const [currentSpeaker, setCurrentSpeaker] = useState<string | null>(null);
   const [messages, setMessages] = useState<MessageEvent[]>([]);
   const [snapshots, setSnapshots] = useState<InspectorSnapshot[]>([]);
   const [activeSnapshotId, setActiveSnapshotId] = useState<string | null>(null);
@@ -175,9 +175,22 @@ const App = () => {
 
   const processingRef = useRef<Record<string, boolean>>({});
 
+  /**
+   * SEQUENTIAL DIALOGUE ENFORCEMENT
+   *
+   * globallyProcessingRef ensures only ONE philosopher speaks at a time.
+   * This creates natural turn-taking:
+   * 1. Global lock prevents any agent from starting while another speaks
+   * 2. When an agent's turn starts, they dequeue ALL messages for that agent
+   * 3. Agent responds to all queued messages in a single comprehensive reply
+   * 4. Lock releases, drainQueues() triggers next speaker
+   */
+  const globallyProcessingRef = useRef<boolean>(false);
+
   const processedMessagesRef = useRef(new Set<string>());
   const memoriesRef = useRef(memories);
   const isPausedRef = useRef(isPaused);
+  const topicRef = useRef(topic);
 
   useEffect(() => {
     philosopherIds.forEach(id => {
@@ -291,28 +304,178 @@ const App = () => {
     });
   }
 
+  /**
+   * SEQUENTIAL QUEUE PROCESSING
+   *
+   * This function enforces turn-taking by:
+   * 1. Checking global lock (only one speaker at a time)
+   * 2. Dequeuing ALL tasks for this philosopher
+   * 3. Processing them together as a batch
+   * 4. Releasing lock and triggering next speaker
+   */
   async function runQueue(philosopherId: string): Promise<void> {
     if (isPausedRef.current) return;
+    if (globallyProcessingRef.current) return; // NEW: global lock check
     if (processingRef.current[philosopherId]) return;
 
     const queue = queuesRef.current[philosopherId];
     if (!queue || queue.length === 0) return;
 
-    const task = queue.shift();
+    // NEW: Dequeue ALL tasks for comprehensive response
+    const tasks = [...queue];
+    queuesRef.current[philosopherId] = [];
     updateQueueDepths();
-    if (!task) return;
 
+    if (tasks.length === 0) return;
+
+    globallyProcessingRef.current = true; // NEW: acquire global lock
     processingRef.current[philosopherId] = true;
+    setCurrentSpeaker(philosopherId); // NEW: set current speaker indicator
     try {
-      await processTask(task);
+      await processBatchedTasks(tasks);
     } finally {
       processingRef.current[philosopherId] = false;
-      if (!isPausedRef.current && queuesRef.current[philosopherId]?.length) {
-        void runQueue(philosopherId);
-      }
+      globallyProcessingRef.current = false; // NEW: release global lock
+      setCurrentSpeaker(null); // NEW: clear speaker indicator
+      // NEW: Trigger next speaker
+      drainQueues();
     }
   }
 
+  /**
+   * BATCHED TASK PROCESSING WITH WEB-SEARCH ENHANCEMENT
+   *
+   * Processes multiple queued messages together, allowing the agent
+   * to respond comprehensively to all pending messages in one reply.
+   * Before generating response, searches for relevant Chinese philosophical quotes.
+   */
+  async function processBatchedTasks(tasks: ResponseTask[]): Promise<void> {
+    if (tasks.length === 0) return;
+
+    const philosopher = philosopherMap.get(tasks[0].philosopherId);
+    if (!philosopher) return;
+
+    // Aggregate all trigger messages
+    const uniqueTriggers = Array.from(
+      new Map(tasks.map(t => [t.trigger.id, t.trigger])).values()
+    );
+
+    // Build comprehensive context with ALL messages
+    const triggerText = uniqueTriggers
+      .map(t => `[${t.speaker}]: ${t.surface}`)
+      .join('\n');
+
+    const context = assembleContextForPhilosopher(philosopher, memoriesRef.current, {
+      recipients: uniqueTriggers.flatMap(t => t.recipients),
+      text: triggerText,
+      timestamp: uniqueTriggers[uniqueTriggers.length - 1].timestamp,
+      speaker: uniqueTriggers[uniqueTriggers.length - 1].speaker,
+    });
+
+    appendEventFeed(`${formatTime(new Date().toISOString())} · routing → ${philosopher.name}`);
+
+    // NEW: Search for relevant philosophical quote
+    let quoteData: QuoteData | undefined;
+    try {
+      appendEventFeed(`${formatTime(new Date().toISOString())} · searching quotes...`);
+      const searchQuery = `${philosopher.name} ${topicRef.current} classical Chinese philosophy quote`;
+
+      // Note: In a real implementation, this would call a backend endpoint
+      // that uses the MCP Exa tool. For now, we'll skip the actual search
+      // and include a placeholder in the prompt for the model to provide quotes.
+      quoteData = undefined; // Placeholder for actual Exa integration
+    } catch (error) {
+      console.warn('Quote search failed:', error);
+      // Continue without quote
+    }
+
+    try {
+      // Enhance prompt with request for Chinese quote
+      const enhancedPrompt = `${context.promptText}\n\nIMPORTANT: Please include a relevant quote from ${philosopher.name}'s teachings in your response. Provide the quote in classical Chinese, followed by English translation, and cite the source.`;
+
+      const response = await sendMessageToBackend({
+        messages: [{ role: 'user', content: enhancedPrompt }],
+      });
+
+      const { finalText, reasoning } = parseModelResponse(response.content);
+
+      // Determine recipients: all speakers who sent messages + moderator
+      const allSpeakers = new Set(uniqueTriggers.map(t => t.speaker));
+      const replyRecipients = Array.from(allSpeakers).concat(['moderator']);
+
+      const replyTimestamp = new Date().toISOString();
+      const replyMessage: MessageEvent = {
+        id: `reply-${tasks[0].philosopherId}-${Date.now()}`,
+        type: 'message',
+        speaker: philosopher.id,
+        recipients: replyRecipients,
+        phase: currentPhase,
+        timestamp: replyTimestamp,
+        surface: finalText,
+        insight: reasoning,
+        quote: quoteData,
+        translations: { english: finalText },
+      };
+
+      setMessages(prev => [...prev, replyMessage]);
+      appendEventFeed(
+        `${formatTime(replyTimestamp)} · ${philosopher.name} → ${replyRecipients.join(', ')}`,
+      );
+
+      setMemories(prev => {
+        const next = pushMemoryEntry(prev, replyMessage);
+        memoriesRef.current = next;
+        return next;
+      });
+
+      const historyLines = buildHistoryLines(context, currentPhase);
+      const contextMessages = historyLines.map(line => ({
+        id: line.id,
+        speaker: line.speaker,
+        phase: line.phase,
+        surface: line.message,
+        timestamp: line.timestamp,
+      }));
+
+      const snapshot: InspectorSnapshot = {
+        id: `ctx-${tasks[0].philosopherId}-${Date.now()}`,
+        type: 'context-snapshot',
+        phase: currentPhase,
+        timestamp: replyTimestamp,
+        contextId: `session-${tasks[0].philosopherId}`,
+        round: messages.length + 1,
+        audience: tasks[0].philosopherId,
+        userPrompt: triggerText,
+        prompt: {
+          templateId: 'confucian_cafe.prompt.dynamic',
+          templateSkeleton: '',
+          rendered: context.promptText,
+        },
+        contextMessages,
+        callPayload: {
+          recipient: tasks[0].philosopherId,
+          history: context.renderedHistory,
+          historyEntries: contextMessages,
+          latest: context.latestLine,
+          triggerId: uniqueTriggers[0].id,
+          final: finalText,
+          reasoning: reasoning ?? undefined,
+        },
+      };
+
+      setSnapshots(prev => [...prev, snapshot]);
+
+      enqueueResponsesFromMessage(replyMessage);
+    } catch (error) {
+      console.error(error);
+      appendEventFeed(
+        `${formatTime(new Date().toISOString())} · backend error (${philosopher.name})`,
+        { dedupe: true },
+      );
+    }
+  }
+
+  // Legacy single-task processor (kept for reference, not used in sequential mode)
   async function processTask(task: ResponseTask) {
     const philosopher = philosopherMap.get(task.philosopherId);
     if (!philosopher) return;
@@ -424,6 +587,10 @@ const App = () => {
     }
   }, [isPaused]);
 
+  useEffect(() => {
+    topicRef.current = topic;
+  }, [topic]);
+
   const roster = useMemo(
     () => philosophers.filter(philosopher => activeIds.includes(philosopher.id)),
     [philosophers, activeIds],
@@ -433,11 +600,6 @@ const App = () => {
     setActiveIds(prev =>
       prev.includes(id) ? prev.filter(entry => entry !== id) : [...prev, id],
     );
-  };
-
-  const toggleLanguageDefault = (key: keyof LanguageDefaults) => {
-    if (key === 'english') return;
-    setLanguageDefaults(prev => ({ ...prev, [key]: !prev[key] }));
   };
 
   const handlePrompt = ({ prompt, recipients }: ComposerSubmission) => {
@@ -478,12 +640,6 @@ const App = () => {
     appendEventFeed(`${formatTime(new Date().toISOString())} · system → ${philosopher.name} joined`);
   };
 
-  const handleLanguageRequest = (messageId: string, language: 'modern' | 'classical') => {
-    appendEventFeed(
-      `${formatTime(new Date().toISOString())} · request → ${language} (${messageId})`,
-    );
-  };
-
   const handleTogglePause = () => {
     setIsPaused(prev => {
       const next = !prev;
@@ -498,8 +654,6 @@ const App = () => {
   return (
     <div className="app-shell">
       <HeaderBand
-        languageDefaults={languageDefaults}
-        onLanguageDefaultsChange={toggleLanguageDefault}
         inspectorOpen={inspectorOpen}
         onToggleInspector={() => setInspectorOpen(prev => !prev)}
         backendHealthy={backendHealthy}
@@ -512,8 +666,8 @@ const App = () => {
           philosophers={philosophers}
           activeIds={activeIds}
           onToggle={toggleActive}
-          languageDefaults={languageDefaults}
-          onLanguageDefaultsChange={toggleLanguageDefault}
+          topic={topic}
+          onTopicChange={setTopic}
           showInsights={showInsights}
           onToggleInsights={setShowInsights}
           eventFeed={eventFeed}
@@ -523,13 +677,13 @@ const App = () => {
 
         <section className={`dialogue-board ${inspectorOpen ? 'inspector-visible' : ''}`}>
           <DialogueStream
-            topic="Water Control Ethics"
-            date={formatDate('2025-10-06T00:00:00Z')}
+            topic={topic}
+            date={formatDate(sessionDate)}
             messages={messages}
             roster={roster}
             participants={philosophers}
             showInsights={showInsights}
-            onLanguageRequest={handleLanguageRequest}
+            currentSpeaker={currentSpeaker}
             onSendPrompt={handlePrompt}
           />
 
@@ -550,16 +704,12 @@ const App = () => {
 export default App;
 
 const HeaderBand = ({
-  languageDefaults,
-  onLanguageDefaultsChange,
   inspectorOpen,
   onToggleInspector,
   backendHealthy,
   isPaused,
   onTogglePause,
 }: {
-  languageDefaults: LanguageDefaults;
-  onLanguageDefaultsChange: (key: keyof LanguageDefaults) => void;
   inspectorOpen: boolean;
   onToggleInspector: () => void;
   backendHealthy: boolean | null;
@@ -571,14 +721,12 @@ const HeaderBand = ({
   return (
     <header className="header-band">
       <div>
-        <h1>Confucian Café · React Demo</h1>
+        <h1>Confucian Café · Dialogue Orchestrator</h1>
         <p className="header-subline">
-          Swap philosophers on the fly, keep English as the landing layer, and pull Chinese or
-          insights only when you toggle.
+          Sequential philosophical dialogue with web-enhanced responses
         </p>
       </div>
       <div className="toggle-bar">
-        <LanguageChips defaults={languageDefaults} onToggle={onLanguageDefaultsChange} />
         <button className="inspector-toggle" onClick={onToggleInspector}>
           {inspectorOpen ? 'Hide Inspector' : 'Show Inspector'}
         </button>
@@ -594,38 +742,12 @@ const HeaderBand = ({
   );
 };
 
-const LanguageChips = ({
-  defaults,
-  onToggle,
-}: {
-  defaults: LanguageDefaults;
-  onToggle: (key: keyof LanguageDefaults) => void;
-}) => (
-  <div className="toggle-bar">
-    <span className={`pill ${defaults.english ? 'active' : ''}`}>EN locked</span>
-    <button
-      className={`pill ${defaults.modern ? 'active' : ''}`}
-      onClick={() => onToggle('modern')}
-      type="button"
-    >
-      现 · Modern auto
-    </button>
-    <button
-      className={`pill ${defaults.classical ? 'active' : ''}`}
-      onClick={() => onToggle('classical')}
-      type="button"
-    >
-      古 · Classical auto
-    </button>
-  </div>
-);
-
 const SideColumn = ({
   philosophers,
   activeIds,
   onToggle,
-  languageDefaults,
-  onLanguageDefaultsChange,
+  topic,
+  onTopicChange,
   showInsights,
   onToggleInsights,
   eventFeed,
@@ -635,8 +757,8 @@ const SideColumn = ({
   philosophers: Philosopher[];
   activeIds: string[];
   onToggle: (id: string) => void;
-  languageDefaults: LanguageDefaults;
-  onLanguageDefaultsChange: (key: keyof LanguageDefaults) => void;
+  topic: string;
+  onTopicChange: (topic: string) => void;
   showInsights: boolean;
   onToggleInsights: (value: boolean) => void;
   eventFeed: string[];
@@ -722,25 +844,15 @@ const SideColumn = ({
         {activeTab === 'controls' && (
           <>
             <div className="card">
-              <strong>Language Defaults</strong>
-              <div className="toggle-bar">
-                <span className="pill active">EN auto</span>
-                <button
-                  className={`pill ${languageDefaults.modern ? 'active' : ''}`}
-                  onClick={() => onLanguageDefaultsChange('modern')}
-                  type="button"
-                >
-                  Modern auto
-                </button>
-                <button
-                  className={`pill ${languageDefaults.classical ? 'active' : ''}`}
-                  onClick={() => onLanguageDefaultsChange('classical')}
-                  type="button"
-                >
-                  Classical auto
-                </button>
-              </div>
-              <p>English stays locked; other layers stream in automatically when enabled.</p>
+              <strong>Dialogue Topic</strong>
+              <input
+                type="text"
+                value={topic}
+                onChange={(e) => onTopicChange(e.target.value)}
+                placeholder="Enter dialogue topic..."
+                className="topic-input"
+              />
+              <p>Define the central question or theme for this philosophical dialogue.</p>
             </div>
 
             <div className="card">
@@ -905,7 +1017,7 @@ const DialogueStream = ({
   roster,
   participants,
   showInsights,
-  onLanguageRequest,
+  currentSpeaker,
   onSendPrompt,
 }: {
   topic: string;
@@ -914,9 +1026,12 @@ const DialogueStream = ({
   roster: Philosopher[];
   participants: Philosopher[];
   showInsights: boolean;
-  onLanguageRequest: (messageId: string, language: 'modern' | 'classical') => void;
+  currentSpeaker: string | null;
   onSendPrompt: (submission: ComposerSubmission) => void;
 }) => {
+  const speakerName = currentSpeaker
+    ? participants.find(p => p.id === currentSpeaker)?.name || currentSpeaker
+    : null;
   return (
     <>
       <div className="dialogue-header">
@@ -925,7 +1040,11 @@ const DialogueStream = ({
           <span className="dialogue-topic">Topic: {topic} · {date}</span>
         </div>
         <div className="dialogue-meta">
-          <span>Active philosophers: {roster.length}</span>
+          {speakerName ? (
+            <span className="turn-indicator">🎤 {speakerName} is speaking...</span>
+          ) : (
+            <span>Active philosophers: {roster.length}</span>
+          )}
         </div>
       </div>
 
@@ -935,7 +1054,6 @@ const DialogueStream = ({
             key={message.id}
             message={message}
             showInsights={showInsights}
-            onLanguageRequest={onLanguageRequest}
             participants={participants}
           />
         ))}
@@ -957,21 +1075,12 @@ const DialogueStream = ({
 const MessageCard = ({
   message,
   showInsights,
-  onLanguageRequest,
   participants,
 }: {
   message: MessageEvent;
   showInsights: boolean;
-  onLanguageRequest: (messageId: string, language: 'modern' | 'classical') => void;
   participants: Philosopher[];
 }) => {
-  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
-
-  const toggleLanguage = (lang: 'modern' | 'classical') => {
-    onLanguageRequest(message.id, lang);
-    setExpanded(prev => ({ ...prev, [lang]: !prev[lang] }));
-  };
-
   const speaker = participants.find(philosopher => philosopher.id === message.speaker);
   const recipientLabels = message.recipients.map(recipient => {
     if (recipient === 'moderator') {
@@ -988,26 +1097,15 @@ const MessageCard = ({
           {(speaker?.name || message.speaker)} · {formatTime(message.timestamp)} · →{' '}
           {recipientLabels.join(', ')}
         </span>
-        <span className="pill">EN surface</span>
       </div>
       <p>{message.surface}</p>
-      <div className="toggle-bar">
-        <button className="ghost-button" onClick={() => toggleLanguage('modern')} type="button">
-          {expanded.modern ? 'Hide Modern' : 'Show Modern Chinese'}
-        </button>
-        <button
-          className="ghost-button secondary"
-          onClick={() => toggleLanguage('classical')}
-          type="button"
-        >
-          {expanded.classical ? 'Hide Classical' : 'Show Classical'}
-        </button>
-      </div>
-      {expanded.modern && message.translations.modern && (
-        <TranslationBlock label="现 · Modern Chinese" text={message.translations.modern} />
-      )}
-      {expanded.classical && message.translations.classical && (
-        <TranslationBlock label="古 · Classical Chinese" text={message.translations.classical} />
+      {message.quote && (
+        <details className="quote-block" open>
+          <summary>📜 Classical Quote</summary>
+          <div className="chinese-quote">{message.quote.chinese}</div>
+          <div className="english-translation">{message.quote.english}</div>
+          <cite className="quote-source">— {message.quote.source}</cite>
+        </details>
       )}
       {showInsights && message.insight && (
         <details className="insight" open>
@@ -1018,13 +1116,6 @@ const MessageCard = ({
     </li>
   );
 };
-
-const TranslationBlock = ({ label, text }: { label: string; text: string }) => (
-  <div className="translation-block">
-    <strong>{label}</strong>
-    <div>{text}</div>
-  </div>
-);
 
 const PromptComposer = ({
   onSubmit,

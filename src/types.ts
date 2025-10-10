@@ -9,10 +9,14 @@ export type Philosopher = {
   personaTemplate: string;
 };
 
-export type TranslationLanguage = 'english' | 'modern' | 'classical';
-
-export type TranslationMap = Partial<Record<TranslationLanguage, string>> & {
+export type TranslationMap = {
   english: string;
+};
+
+export type QuoteData = {
+  chinese: string;
+  english: string;
+  source: string;
 };
 
 export type MessageEvent = {
@@ -24,6 +28,7 @@ export type MessageEvent = {
   timestamp: string;
   surface: string;
   insight?: string;
+  quote?: QuoteData;
   translations: TranslationMap;
 };
 
@@ -75,11 +80,7 @@ export type SnapshotCallPayload = {
   reasoning?: string;
 };
 
-export type LanguageDefaults = {
-  english: boolean;
-  modern: boolean;
-  classical: boolean;
-};
+// Note: LanguageDefaults type removed - English-only interface
 
 export type ComposerSubmission = {
   prompt: string;

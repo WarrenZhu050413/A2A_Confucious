@@ -1,6 +1,5 @@
 import {
   ConversationEvent,
-  LanguageDefaults,
   MessageEvent,
   PhaseChangeEvent,
   SnapshotEvent,
@@ -54,11 +53,7 @@ export const mockPhilosophers = [
   },
 ] as const;
 
-export const initialLanguageDefaults: LanguageDefaults = {
-  english: true,
-  modern: false,
-  classical: false,
-};
+// Note: Language defaults removed - English-only interface
 
 export const promptTemplateSkeleton = `<Prompt>
   <SystemPersona philosopher="{philosopher}" version="2025-09-12">
@@ -102,8 +97,6 @@ export const mockMessages: MessageEvent[] = [
     translations: {
       english:
         'A stable river requires ritual order: align community duties so each hamlet knows its flood watch.',
-      modern: '河水要稳，需礼制齐备，让乡里各司其职守望。',
-      classical: '河患欲平，必礼序具备，使乡社各司水禁。',
     },
   },
   {
@@ -118,8 +111,6 @@ export const mockMessages: MessageEvent[] = [
     translations: {
       english:
         'Let the water wander within soft banks; govern like tending bamboo—guide growth, do not hammer it straight.',
-      modern: '让水在柔和堤岸间流淌，治理如养竹，导其生长，不强行折弯。',
-      classical: '俟水游于柔岸，治之如养竹，导之勿折。',
     },
   },
   {
@@ -134,8 +125,6 @@ export const mockMessages: MessageEvent[] = [
     translations: {
       english:
         'Count the benefit: evacuate first, reinforce levees second, record lessons for every province.',
-      modern: '先算利害：先撤离，再固堤，最后记录经验以示各郡。',
-      classical: '先度利害；先撤民，次厚堤，终记行以示诸郡。',
     },
   },
   {
@@ -148,8 +137,6 @@ export const mockMessages: MessageEvent[] = [
     surface: 'Ritual can wait; measure the flow and deploy crews before ceremony.',
     translations: {
       english: 'Ritual can wait; measure the flow and deploy crews before ceremony.',
-      modern: '礼仪可以后置，先测水量，调度工匠，再谈仪式。',
-      classical: '礼可后议，先量水势，召匠布置而后礼。',
     },
   },
   {
@@ -159,12 +146,10 @@ export const mockMessages: MessageEvent[] = [
     recipients: ['mozi', 'laozi'],
     phase: 'synthesis',
     timestamp: timestamp('2025-10-06T09:08:40Z'),
-    surface: 'Let us set rites that encode Mozi’s schedule: the ritual becomes the checklist for readiness.',
+    surface: 'Let us set rites that encode Mozi's schedule: the ritual becomes the checklist for readiness.',
     translations: {
       english:
-        'Let us set rites that encode Mozi’s schedule: the ritual becomes the checklist for readiness.',
-      modern: '将墨子的时程编入礼仪，使仪式成为准备的核对单。',
-      classical: '以墨子程为礼节，使礼即备具之簿。',
+        'Let us set rites that encode Mozi's schedule: the ritual becomes the checklist for readiness.',
     },
   },
 ];

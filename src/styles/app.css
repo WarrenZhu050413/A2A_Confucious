@@ -109,7 +109,7 @@ h1 {
   font-size: 13px;
   color: var(--level-3);
   padding: 6px 10px;
-  border-radius: 999px;
+  border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -117,6 +117,7 @@ h1 {
 .tab-bar button.active {
   background: rgba(139, 0, 0, 0.12);
   color: var(--level-1);
+  border-bottom: 2px solid var(--level-1);
 }
 
 .tab-panel {
@@ -200,7 +201,7 @@ h1 {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   user-select: none;
@@ -222,7 +223,7 @@ h1 {
 
 .pill.active {
   background: rgba(139, 0, 0, 0.15);
-  border-color: var(--chinese-red);
+  border: 2px solid var(--chinese-red);
   color: var(--level-1);
 }
 
@@ -279,16 +280,18 @@ h1 {
   align-items: center;
   gap: 4px;
   padding: 2px 8px;
-  border-radius: 999px;
+  border-radius: 4px;
   background: rgba(0, 0, 0, 0.05);
   color: var(--level-3);
   font-size: 11px;
   font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .queue-chip.active {
   background: rgba(139, 0, 0, 0.18);
   color: var(--level-1);
+  border-color: var(--chinese-red);
 }
 
 .queue-count {
@@ -374,7 +377,7 @@ h1 {
   color: white;
   border: none;
   padding: 8px 18px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-weight: 600;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -404,7 +407,7 @@ h1 {
   color: var(--level-2);
   font-weight: 600;
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 6px;
   cursor: pointer;
 }
 
@@ -414,7 +417,7 @@ h1 {
   color: var(--level-3);
   font-weight: 600;
   padding: 6px 14px;
-  border-radius: 999px;
+  border-radius: 6px;
   cursor: pointer;
   transition: background 0.2s ease;
 }
@@ -427,7 +430,7 @@ h1 {
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   border: 1px solid rgba(0, 0, 0, 0.18);
@@ -484,7 +487,7 @@ h1 {
   align-items: center;
   gap: 6px;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 6px;
   font-size: 12px;
   font-weight: 600;
   border: 1px solid rgba(139, 0, 0, 0.18);
@@ -613,4 +616,80 @@ h1 {
   color: var(--level-2);
   font-weight: 600;
   font-size: 12px;
+}
+
+.topic-input {
+  width: 100%;
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.topic-input:focus {
+  outline: none;
+  border-color: var(--chinese-red);
+  box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.1);
+}
+
+.turn-indicator {
+  color: var(--level-1);
+  font-weight: 700;
+  font-size: 13px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+.quote-block {
+  border: 1px solid rgba(139, 0, 0, 0.24);
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(255, 248, 220, 0.6);
+  margin: 8px 0;
+}
+
+.quote-block summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--level-2);
+  margin-bottom: 8px;
+}
+
+.quote-block[open] summary {
+  color: var(--level-1);
+  margin-bottom: 10px;
+}
+
+.chinese-quote {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--level-1);
+  margin: 8px 0;
+  line-height: 1.6;
+  font-family: "STSong", "SimSun", "Songti SC", serif;
+}
+
+.english-translation {
+  font-size: 13px;
+  color: var(--level-3);
+  margin: 6px 0;
+  font-style: italic;
+}
+
+.quote-source {
+  display: block;
+  font-size: 12px;
+  color: var(--level-4);
+  margin-top: 8px;
+  font-style: normal;
 }
