@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ChangeEvent } from 'react';
-import { mockPhilosophers } from './data/mockData';
+import { defaultPhilosophers } from './config/philosophers';
 import {
   ComposerSubmission,
   InspectorSnapshot,
@@ -117,11 +117,11 @@ const buildHistoryLines = (
 
 const App = () => {
   const [philosophers, setPhilosophers] = useState<Philosopher[]>(() =>
-    mockPhilosophers.map((philosopher) => ({ ...philosopher })),
+    defaultPhilosophers.map((philosopher) => ({ ...philosopher })),
   );
   const [activeIds, setActiveIds] = useState<string[]>(() =>
     ['confucius', 'laozi', 'mozi'].filter((id) =>
-      mockPhilosophers.some((philosopher) => philosopher.id === id),
+      defaultPhilosophers.some((philosopher) => philosopher.id === id),
     ),
   );
   const [topic, setTopic] = useState<string>('The Way');
@@ -138,7 +138,7 @@ const App = () => {
   const [eventFeed, setEventFeed] = useState<string[]>([]);
   const [queueDepths, setQueueDepths] = useState<Record<string, number>>(() => {
     const initial: Record<string, number> = {};
-    mockPhilosophers.forEach(({ id }) => {
+    defaultPhilosophers.forEach(({ id }) => {
       initial[id] = 0;
     });
     return initial;
@@ -147,7 +147,7 @@ const App = () => {
   const [inspectorOpen, setInspectorOpen] = useState(false);
   const [backendHealthy, setBackendHealthy] = useState<boolean | null>(null);
   const [isPaused, setIsPaused] = useState(false);
-  const [memories, setMemories] = useState(() => createEmptyMemories(mockPhilosophers));
+  const [memories, setMemories] = useState(() => createEmptyMemories(defaultPhilosophers));
 
   const philosopherMap = useMemo(() => {
     const map = new Map<string, Philosopher>();
