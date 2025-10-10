@@ -146,10 +146,10 @@ export const mockMessages: MessageEvent[] = [
     recipients: ['mozi', 'laozi'],
     phase: 'synthesis',
     timestamp: timestamp('2025-10-06T09:08:40Z'),
-    surface: 'Let us set rites that encode Mozi's schedule: the ritual becomes the checklist for readiness.',
+    surface: 'Let us set rites that encode Mozi\'s schedule: the ritual becomes the checklist for readiness.',
     translations: {
       english:
-        'Let us set rites that encode Mozi's schedule: the ritual becomes the checklist for readiness.',
+        'Let us set rites that encode Mozi\'s schedule: the ritual becomes the checklist for readiness.',
     },
   },
 ];
