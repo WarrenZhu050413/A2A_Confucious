@@ -1,0 +1,86 @@
+.promptComposer {
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: 10px;
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.96);
+  position: sticky;
+  bottom: 0;
+}
+
+.promptComposer label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.keyboardHint {
+  font-size: 11px;
+  color: var(--level-4);
+  font-weight: 500;
+  font-style: italic;
+}
+
+.promptComposer textarea {
+  width: 100%;
+  min-height: 70px;
+  border-radius: 6px;
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  padding: 10px;
+  font-family: inherit;
+  font-size: 14px;
+  resize: vertical;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.toggleBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--level-3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.pill.active {
+  background: rgba(139, 0, 0, 0.15);
+  border: 2px solid var(--chinese-red);
+  color: var(--level-1);
+}
+
+.primaryButton {
+  background: linear-gradient(135deg, rgba(139, 0, 0, 0.85), rgba(205, 92, 92, 0.9));
+  color: white;
+  border: none;
+  padding: 8px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

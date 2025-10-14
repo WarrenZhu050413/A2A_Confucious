@@ -1,0 +1,249 @@
+.rosterColumn {
+  background: var(--soft-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: var(--shadow);
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.tabBar {
+  display: flex;
+  gap: 8px;
+  border-bottom: 1px solid rgba(139, 0, 0, 0.1);
+  padding-bottom: 6px;
+}
+
+.tabBar button {
+  border: none;
+  background: transparent;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--level-3);
+  padding: 6px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tabBar button.active {
+  background: rgba(139, 0, 0, 0.12);
+  color: var(--level-1);
+  border-bottom: 2px solid var(--level-1);
+}
+
+.tabPanel {
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 4px;
+  min-height: 0;
+}
+
+.toggleBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--level-3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.pill.active {
+  background: rgba(139, 0, 0, 0.15);
+  border: 2px solid var(--chinese-red);
+  color: var(--level-1);
+}
+
+.queueCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(139, 0, 0, 0.18);
+  color: var(--level-1);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.card header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--level-2);
+  font-weight: 700;
+}
+
+.editButton {
+  margin-top: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  background: rgba(139, 0, 0, 0.08);
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: 6px;
+  color: var(--level-1);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.editButton:hover {
+  background: rgba(139, 0, 0, 0.15);
+  border-color: var(--chinese-red);
+}
+
+.rosterMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rosterPort {
+  font-size: 12px;
+  color: var(--level-3);
+  font-weight: 600;
+}
+
+.queueChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--level-3);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.queueChip.active {
+  background: rgba(139, 0, 0, 0.18);
+  color: var(--level-1);
+  border-color: var(--chinese-red);
+}
+
+.topicInput {
+  width: 100%;
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  margin: 6px 0;
+}
+
+.topicInput:focus {
+  outline: none;
+  border-color: var(--chinese-red);
+  box-shadow: 0 0 0 2px rgba(139, 0, 0, 0.1);
+}
+
+.eventFeed {
+  font-family: 'SF Mono', 'Roboto Mono', Menlo, monospace;
+  font-size: 12.5px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 6px;
+  padding: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  display: grid;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.queueOrderList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.queueOrderItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(139, 0, 0, 0.04);
+  border: 1px solid rgba(139, 0, 0, 0.15);
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.queueOrderItem:first-child {
+  background: rgba(139, 0, 0, 0.12);
+  border: 2px solid rgba(139, 0, 0, 0.3);
+  font-weight: 600;
+}
+
+.queuePosition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(139, 0, 0, 0.15);
+  color: var(--level-1);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.queueOrderItem:first-child .queuePosition {
+  background: var(--chinese-red);
+  color: white;
+}
+
+.queuePhilosopherName {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--level-2);
+}
+
+.queueOrderItem:first-child .queuePhilosopherName {
+  color: var(--level-1);
+}
+
+.queueMessageCount {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--level-3);
+  background: rgba(0, 0, 0, 0.08);
+  padding: 3px 8px;
+  border-radius: 10px;
+}

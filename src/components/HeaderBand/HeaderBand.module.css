@@ -1,0 +1,88 @@
+.headerBand {
+  position: sticky;
+  top: 0;
+  background: var(--soft-white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 18px 20px;
+  box-shadow: var(--shadow);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.headerSubline {
+  font-size: 13px;
+  color: var(--level-3);
+  margin-top: 6px;
+}
+
+.toggleBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inspectorToggle {
+  border: 1px dashed rgba(139, 0, 0, 0.28);
+  background: rgba(139, 0, 0, 0.06);
+  color: var(--level-2);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.pauseToggle {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--level-3);
+  font-weight: 600;
+  padding: 6px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.pauseToggle:hover {
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.statusChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: rgba(0, 0, 0, 0.04);
+  color: var(--level-3);
+}
+
+.statusChip.paused {
+  border-color: var(--chinese-red);
+  background: rgba(139, 0, 0, 0.1);
+  color: var(--level-1);
+}
+
+.backendDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.3);
+}
+
+.backendDot.online {
+  background: #00a86b;
+}
+
+.backendDot.offline {
+  background: #b71c1c;
+}
+
+.backendDot.pending {
+  background: #ffd700;
+}

@@ -1,0 +1,110 @@
+/* CSS Custom Properties (Variables) */
+:root {
+  --chinese-red: #8b0000;
+  --chinese-gold: #ffd700;
+  --paper-beige: #f5f5dc;
+  --light-cream: #fffef0;
+  --ink-black: #1a1a1a;
+  --level-1: #8b0000;
+  --level-2: #b71c1c;
+  --level-3: #555555;
+  --level-4: #777777;
+  --jade: #00a86b;
+  --soft-white: rgba(255, 255, 255, 0.96);
+  --border: rgba(139, 0, 0, 0.16);
+  --shadow: 0 12px 40px rgba(26, 26, 26, 0.12);
+}
+
+/* CSS Reset */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* Body Styles */
+body {
+  background: linear-gradient(135deg, var(--paper-beige) 0%, var(--light-cream) 100%);
+  color: var(--ink-black);
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro', 'Segoe UI', Roboto, Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.45;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* Global Typography */
+h1 {
+  font-size: 32px;
+  font-weight: 900;
+  letter-spacing: -0.5px;
+  margin: 0;
+  background: linear-gradient(135deg, var(--chinese-red), #cd5c5c);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* Layout Utility Classes */
+.app-shell {
+  width: min(1600px, 96vw);
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.main-frame {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 18px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.main-frame.with-philosopher-view {
+  grid-template-columns: 300px 1fr 420px;
+}
+
+.dialogue-board {
+  background: var(--soft-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 0;
+  max-height: 100%;
+  padding: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.dialogue-board.inspector-visible {
+  padding-right: calc(18px + min(360px, 40vw));
+}
+
+/* Responsive Layout */
+@media (max-width: 1080px) {
+  .main-frame {
+    grid-template-columns: 1fr;
+  }
+
+  .dialogue-board {
+    min-height: 60vh;
+  }
+
+  .dialogue-board.inspector-visible {
+    padding-right: 18px;
+  }
+}

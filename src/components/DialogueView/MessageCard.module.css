@@ -1,0 +1,92 @@
+.message {
+  border: 1px solid rgba(139, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 12px;
+  background: white;
+  display: grid;
+  gap: 8px;
+}
+
+.message.ownMessage {
+  border: 2px solid rgba(139, 0, 0, 0.3);
+  background: rgba(139, 0, 0, 0.04);
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--level-4);
+}
+
+.quoteBlock {
+  border: 1px solid rgba(139, 0, 0, 0.24);
+  padding: 10px 12px;
+  border-radius: 6px;
+  background: rgba(255, 248, 220, 0.6);
+  margin: 8px 0;
+}
+
+.quoteBlock summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--level-2);
+  margin-bottom: 8px;
+}
+
+.quoteBlock[open] summary {
+  color: var(--level-1);
+  margin-bottom: 10px;
+}
+
+.chineseQuote {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--level-1);
+  margin: 8px 0;
+  line-height: 1.6;
+  font-family: "STSong", "SimSun", "Songti SC", serif;
+}
+
+.englishTranslation {
+  font-size: 13px;
+  color: var(--level-3);
+  margin: 6px 0;
+  font-style: italic;
+}
+
+.quoteSource {
+  display: block;
+  font-size: 12px;
+  color: var(--level-4);
+  margin-top: 8px;
+  font-style: normal;
+}
+
+.insight {
+  border: 1px dashed rgba(139, 0, 0, 0.24);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.insight summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--level-2);
+}
+
+.insight[open] summary {
+  color: var(--level-1);
+}
+
+.insight.reasoningHighlight {
+  background: rgba(139, 0, 0, 0.15);
+  border: 2px solid var(--chinese-red);
+}
+
+.insight.reasoningHighlight summary {
+  color: var(--level-1);
+  font-size: 13px;
+}

@@ -1,0 +1,326 @@
+.inspectorDrawer {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  width: min(360px, 90vw);
+  max-height: calc(100% - 36px);
+  background: var(--soft-white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: var(--shadow);
+  padding: 16px;
+  display: grid;
+  gap: 16px;
+  transform: translateX(16px);
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s ease;
+  overflow-y: auto;
+}
+
+.inspectorDrawer.open {
+  transform: translateX(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.drawerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+  background: rgba(139, 0, 0, 0.08);
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  color: var(--level-2);
+}
+
+.drawerContent {
+  display: grid;
+  gap: 14px;
+}
+
+.drawerClose {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(139, 0, 0, 0.18);
+  background: rgba(139, 0, 0, 0.08);
+  color: var(--level-1);
+  cursor: pointer;
+}
+
+.snapshotSelector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  color: var(--level-3);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+}
+
+.pill.active {
+  background: rgba(139, 0, 0, 0.15);
+  border: 2px solid var(--chinese-red);
+  color: var(--level-1);
+}
+
+.promptMeta {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  line-height: 1.3;
+}
+
+.toggleBar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.inspectorActions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ghostButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  user-select: none;
+  border: 1px dashed rgba(139, 0, 0, 0.28);
+  background: rgba(139, 0, 0, 0.04);
+  color: var(--level-2);
+  cursor: pointer;
+}
+
+.ghostButton.secondary {
+  border-color: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--level-3);
+}
+
+.insight {
+  border: 1px dashed rgba(139, 0, 0, 0.24);
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(255, 215, 0, 0.12);
+}
+
+.insight summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--level-2);
+}
+
+.insight[open] summary {
+  color: var(--level-1);
+}
+
+.codeBlock {
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  background: rgba(0, 0, 0, 0.06);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 10px;
+  font-size: 12px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.agentContextList {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+}
+
+.agentContextList li {
+  border: 1px solid rgba(139, 0, 0, 0.14);
+  border-radius: 6px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  color: var(--level-4);
+}
+
+/* XML Viewer */
+.xmlViewer {
+  background: rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 6px;
+  padding: 12px;
+  font-family: 'SF Mono', 'Menlo', 'Consolas', monospace;
+  font-size: 12px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.xmlControls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.xmlControlButton {
+  padding: 4px 10px;
+  background: rgba(139, 0, 0, 0.08);
+  border: 1px solid rgba(139, 0, 0, 0.2);
+  border-radius: 4px;
+  color: var(--level-1);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.xmlControlButton:hover {
+  background: rgba(139, 0, 0, 0.15);
+  border-color: var(--chinese-red);
+}
+
+.xmlContent {
+  line-height: 1.6;
+}
+
+.xmlNode {
+  margin: 2px 0;
+}
+
+.xmlTagLine {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.xmlToggle {
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid rgba(139, 0, 0, 0.3);
+  border-radius: 3px;
+  color: var(--level-1);
+  font-size: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.xmlToggle:hover {
+  background: rgba(139, 0, 0, 0.1);
+  border-color: var(--chinese-red);
+}
+
+.xmlTagOpen,
+.xmlTagClose {
+  color: var(--level-3);
+}
+
+.xmlTagName {
+  color: #0066cc;
+  font-weight: 600;
+}
+
+.xmlAttrs {
+  color: #cc6600;
+}
+
+.xmlText {
+  color: var(--ink-black);
+  padding: 2px 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.xmlCdata {
+  background: rgba(255, 215, 0, 0.1);
+  border: 1px dashed rgba(139, 0, 0, 0.2);
+  border-radius: 4px;
+  padding: 6px 8px;
+  margin: 4px 0;
+}
+
+.xmlCdata summary {
+  cursor: pointer;
+  font-weight: 600;
+  color: var(--level-2);
+  font-size: 11px;
+}
+
+.xmlCdata pre {
+  margin: 6px 0 0 0;
+  padding: 0;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--level-3);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.xmlCollapsed {
+  color: var(--level-4);
+  font-style: italic;
+  margin-left: 8px;
+}
+
+.xmlChildren {
+  margin-left: 16px;
+}
+
+@media (max-width: 1080px) {
+  .inspectorDrawer {
+    position: fixed;
+    top: 5%;
+    right: 5%;
+    width: min(92vw, 420px);
+    max-height: 90vh;
+    z-index: 50;
+  }
+}
