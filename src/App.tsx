@@ -260,7 +260,9 @@ const App = () => {
     // Process the first philosopher in the global queue
     if (globalQueueRef.current.queue.length > 0) {
       const nextPhilosopherId = globalQueueRef.current.queue[0];
-      void runQueue(nextPhilosopherId);
+      if (nextPhilosopherId) {
+        void runQueue(nextPhilosopherId);
+      }
     }
   }
 
@@ -314,7 +316,10 @@ const App = () => {
   async function processBatchedTasks(tasks: ResponseTask[]): Promise<void> {
     if (tasks.length === 0) return;
 
-    const philosopher = philosopherMap.get(tasks[0].philosopherId);
+    const firstTask = tasks[0];
+    if (!firstTask) return;
+
+    const philosopher = philosopherMap.get(firstTask.philosopherId);
     if (!philosopher) return;
 
     // Aggregate all trigger messages
@@ -327,14 +332,17 @@ const App = () => {
       .map((t) => `[${t.speaker}]: ${t.surface}`)
       .join('\n');
 
+    const lastTrigger = uniqueTriggers[uniqueTriggers.length - 1];
+    if (!lastTrigger) return;
+
     const context = assembleContextForPhilosopher(
       philosopher,
       memoriesRef.current,
       {
         recipients: uniqueTriggers.flatMap((t) => t.recipients),
         text: triggerText,
-        timestamp: uniqueTriggers[uniqueTriggers.length - 1].timestamp,
-        speaker: uniqueTriggers[uniqueTriggers.length - 1].speaker,
+        timestamp: lastTrigger.timestamp,
+        speaker: lastTrigger.speaker,
       },
       topicRef.current,
     );
@@ -347,11 +355,10 @@ const App = () => {
     let quoteData: QuoteData | undefined;
     try {
       appendEventFeed(`${formatTime(new Date().toISOString())} · searching quotes...`);
-      const searchQuery = `${philosopher.name} ${topicRef.current} classical Chinese philosophy quote`;
-
       // Note: In a real implementation, this would call a backend endpoint
-      // that uses the MCP Exa tool. For now, we'll skip the actual search
-      // and include a placeholder in the prompt for the model to provide quotes.
+      // that uses the MCP Exa tool with a search query like:
+      // `${philosopher.name} ${topicRef.current} classical Chinese philosophy quote`
+      // For now, we'll skip the actual search and include a placeholder in the prompt.
       quoteData = undefined; // Placeholder for actual Exa integration
     } catch (error) {
       console.warn('Quote search failed:', error);
@@ -381,7 +388,7 @@ const App = () => {
 
       const replyTimestamp = new Date().toISOString();
       const replyMessage: MessageEvent = {
-        id: `reply-${tasks[0].philosopherId}-${Date.now()}`,
+        id: `reply-${firstTask.philosopherId}-${Date.now()}`,
         type: 'message',
         speaker: philosopher.id,
         recipients: replyRecipients,
@@ -413,14 +420,17 @@ const App = () => {
         timestamp: line.timestamp,
       }));
 
+      const firstUniqueTrigger = uniqueTriggers[0];
+      if (!firstUniqueTrigger) return;
+
       const snapshot: InspectorSnapshot = {
-        id: `ctx-${tasks[0].philosopherId}-${Date.now()}`,
+        id: `ctx-${firstTask.philosopherId}-${Date.now()}`,
         type: 'context-snapshot',
         phase: currentPhase,
         timestamp: replyTimestamp,
-        contextId: `session-${tasks[0].philosopherId}`,
+        contextId: `session-${firstTask.philosopherId}`,
         round: messages.length + 1,
-        audience: tasks[0].philosopherId,
+        audience: firstTask.philosopherId,
         userPrompt: triggerText,
         prompt: {
           templateId: 'confucian_cafe.prompt.dynamic',
@@ -429,11 +439,11 @@ const App = () => {
         },
         contextMessages,
         callPayload: {
-          recipient: tasks[0].philosopherId,
+          recipient: firstTask.philosopherId,
           history: context.renderedHistory,
           historyEntries: contextMessages,
           latest: context.latestLine,
-          triggerId: uniqueTriggers[0].id,
+          triggerId: firstUniqueTrigger.id,
           final: finalText,
           reasoning: reasoning ?? undefined,
         },

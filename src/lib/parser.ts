@@ -48,9 +48,12 @@ export const parseModelResponse = (raw: string): ParsedResponse => {
           reasoning = maybeReasoning.trim();
         }
         if (Array.isArray(maybeAddressees) && maybeAddressees.length > 0) {
-          addressees = maybeAddressees
+          const filtered = maybeAddressees
             .filter((a) => typeof a === 'string' && a.trim())
             .map((a) => a.trim());
+          if (filtered.length > 0) {
+            addressees = filtered;
+          }
         }
       } catch {
         // ignore parse failure, fall back to raw text

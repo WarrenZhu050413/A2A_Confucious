@@ -256,9 +256,12 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
         if (text) {
           // Check if this is a CDATA placeholder
           const cdataMatch = text.match(/__CDATA_(\d+)__/);
-          if (cdataMatch) {
-            const cdataContent = cdataPlaceholders[parseInt(cdataMatch[1])];
-            nodes.push({ type: 'cdata', content: cdataContent, indent: depth });
+          if (cdataMatch && cdataMatch[1]) {
+            const index = parseInt(cdataMatch[1], 10);
+            const cdataContent = cdataPlaceholders[index];
+            if (cdataContent !== undefined) {
+              nodes.push({ type: 'cdata', content: cdataContent, indent: depth });
+            }
           } else {
             nodes.push({ type: 'text', content: text, indent: depth });
           }
@@ -266,6 +269,7 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
       }
 
       const [, closingSlash, tagName, attrs] = match;
+      if (!tagName) continue;
 
       if (closingSlash) {
         // Closing tag
@@ -273,7 +277,7 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
         nodes.push({ type: 'close', tag: tagName, indent: depth });
       } else {
         // Opening tag
-        nodes.push({ type: 'open', tag: tagName, attrs: attrs.trim(), indent: depth });
+        nodes.push({ type: 'open', tag: tagName, attrs: attrs?.trim() || '', indent: depth });
         depth++;
       }
 
@@ -286,18 +290,19 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
   const nodes = parseXML(xml);
   let nodeIndex = 0;
 
-  const renderNode = (path: string = ''): JSX.Element[] => {
-    const elements: JSX.Element[] = [];
+  const renderNode = (path: string = ''): React.JSX.Element[] => {
+    const elements: React.JSX.Element[] = [];
 
     while (nodeIndex < nodes.length) {
       const node = nodes[nodeIndex];
+      if (!node) break;
 
       if (node.type === 'close') {
         nodeIndex++;
         return elements;
       }
 
-      if (node.type === 'open') {
+      if (node.type === 'open' && node.tag) {
         const currentPath = `${path}/${node.tag}`;
         const isExpanded = expanded.has(currentPath);
         nodeIndex++;
@@ -306,8 +311,10 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
         let depth = 1;
         let closeIndex = nodeIndex;
         while (closeIndex < nodes.length && depth > 0) {
-          if (nodes[closeIndex].type === 'open') depth++;
-          if (nodes[closeIndex].type === 'close') depth--;
+          const closeNode = nodes[closeIndex];
+          if (!closeNode) break;
+          if (closeNode.type === 'open') depth++;
+          if (closeNode.type === 'close') depth--;
           closeIndex++;
         }
 
@@ -357,7 +364,7 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
           // Skip to closing tag
           nodeIndex = closeIndex;
         }
-      } else if (node.type === 'text') {
+      } else if (node.type === 'text' && node.content) {
         elements.push(
           <div
             key={`text-${nodeIndex}`}
@@ -368,7 +375,7 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
           </div>,
         );
         nodeIndex++;
-      } else if (node.type === 'cdata') {
+      } else if (node.type === 'cdata' && node.content) {
         elements.push(
           <details
             key={`cdata-${nodeIndex}`}
@@ -379,6 +386,8 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
             <pre>{node.content}</pre>
           </details>,
         );
+        nodeIndex++;
+      } else {
         nodeIndex++;
       }
     }
@@ -391,15 +400,12 @@ const XMLViewer = ({ xml }: XMLViewerProps) => {
       <div className={styles.xmlControls}>
         <button
           className={styles.xmlControlButton}
-          onClick={() =>
+          onClick={() => {
+            const openNodes = nodes.filter((n) => n.type === 'open' && n.tag);
             setExpanded(
-              new Set(
-                nodes
-                  .filter((n) => n.type === 'open')
-                  .map((_, i) => `/${nodes.filter((n) => n.type === 'open')[i].tag}`),
-              ),
-            )
-          }
+              new Set(openNodes.map((n) => `/${n.tag}`).filter((path): path is string => Boolean(path))),
+            );
+          }}
           type="button"
         >
           Expand All

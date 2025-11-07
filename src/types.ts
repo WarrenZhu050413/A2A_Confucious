@@ -9,6 +9,8 @@ export type Philosopher = {
   personaTemplate: string;
 };
 
+export type TranslationLanguage = 'english' | 'chinese' | 'classical_chinese';
+
 export type TranslationMap = {
   english: string;
 };
