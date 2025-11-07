@@ -69,7 +69,10 @@ export const DialogueStream = ({
             onClick={() => {
               onPerspectiveModeChange('philosopher');
               if (!selectedPhilosopherId && roster.length > 0) {
-                onPhilosopherSelect(roster[0].id);
+                const firstPhilosopher = roster[0];
+                if (firstPhilosopher) {
+                  onPhilosopherSelect(firstPhilosopher.id);
+                }
               }
             }}
             type="button"

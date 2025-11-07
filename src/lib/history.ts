@@ -52,6 +52,9 @@ export const buildHistoryLines = (
         return null;
       }
       const [, timestamp, speaker, , surface] = match;
+      if (!timestamp || !speaker || !surface) {
+        return null;
+      }
       return {
         id: `history-${index}-${timestamp}`,
         timestamp: timestamp.trim(),

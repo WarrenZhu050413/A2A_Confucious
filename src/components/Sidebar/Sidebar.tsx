@@ -77,7 +77,7 @@ export const Sidebar = ({
                   type="button"
                 >
                   <span>{philosopher.name}</span>
-                  {queueDepths[philosopher.id] > 0 && (
+                  {(queueDepths[philosopher.id] ?? 0) > 0 && (
                     <span className={styles.queueCount}>{queueDepths[philosopher.id]}</span>
                   )}
                 </button>
@@ -132,9 +132,9 @@ export const Sidebar = ({
                       <div key={philosopherId} className={styles.queueOrderItem}>
                         <span className={styles.queuePosition}>{index + 1}</span>
                         <span className={styles.queuePhilosopherName}>{philosopher.name}</span>
-                        {queueDepths[philosopherId] > 0 && (
+                        {(queueDepths[philosopherId] ?? 0) > 0 && (
                           <span className={styles.queueMessageCount}>
-                            {queueDepths[philosopherId]} msg{queueDepths[philosopherId] > 1 ? 's' : ''}
+                            {queueDepths[philosopherId]} msg{(queueDepths[philosopherId] ?? 0) > 1 ? 's' : ''}
                           </span>
                         )}
                       </div>

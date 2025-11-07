@@ -52,7 +52,7 @@ export const pushMemoryEntry = (state: MemoryState, message: MessageEvent): Memo
 export const getLatestFor = (state: MemoryState, philosopherId: string): MemoryEntry | null => {
   const list = state.store[philosopherId];
   if (!list || list.length === 0) return null;
-  return list[list.length - 1];
+  return list[list.length - 1] ?? null;
 };
 
 export const getHistoryFor = (state: MemoryState, philosopherId: string): MemoryEntry[] => {
