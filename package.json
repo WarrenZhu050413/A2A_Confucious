@@ -11,7 +11,9 @@
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
     "lint": "eslint \"src/**/*.{ts,tsx}\"",
-    "format": "prettier --write \"src/**/*.{ts,tsx,css,scss,json}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,css,scss,json}\"",
+    "backend": "node backend/server.mjs",
+    "backend:dev": "node --watch backend/server.mjs"
   },
   "keywords": [],
   "author": "",

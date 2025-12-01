@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__orchestra-mcp__spawn_subagent",
+      "mcp__orchestra-mcp__send_message_to_session"
+    ],
+    "allowPathRegex": [
+      "^~/.orchestra/.*"
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "nabokov-backend",
+  "version": "1.0.0",
+  "description": "Local backend server for Nabokov extension using Claude Agent SDK",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\""
+  },
+  "keywords": [
+    "claude",
+    "agent-sdk",
+    "nabokov"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "^0.1.1",
+    "colorette": "^2.0.20",
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
+  }
+}

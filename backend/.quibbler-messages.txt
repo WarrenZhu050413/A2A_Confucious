@@ -1,0 +1,22 @@
+[2025-10-22T01:26:35] Quibbler Quality Review
+
+ISSUE: Fallback mechanism not triggered for unsupported Codex models
+
+OBSERVATION:
+1. server.mjs HAS fallback logic for error code 'UNSUPPORTED_MODEL'
+2. codexProvider.js decorates errors with code 'UNSUPPORTED_MODEL' only for streamed events
+3. When Codex CLI exits with HTTP 400 error, the process exit handler (line 216) creates an error WITHOUT calling decorateCodexError()
+4. This means the 'UNSUPPORTED_MODEL' code is never set
+5. Result: Fallback never triggers, user gets raw 400 error
+
+ROOT CAUSE:
+Line 216 in codexProvider.js:
+  safeReject(new Error(stderr || `Codex process exited with code ${code}`));
+
+Should be:
+  safeReject(decorateCodexError(stderr || `Codex process exited with code ${code}`, options.requestedModel));
+
+RECOMMENDATION:
+Update the process exit error handler to use decorateCodexError() so that "unsupported model" errors are properly tagged with code: 'UNSUPPORTED_MODEL', enabling the fallback mechanism in server.mjs to work correctly.
+
+---
